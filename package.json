@@ -1,0 +1,16 @@
+{
+  "name": "job-portal-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "concurrently -n web,server -c blue,green \"pnpm --filter @jobnest/web dev\" \"pnpm --filter @jobnest/server dev\"",
+    "build": "pnpm --filter @jobnest/web build && pnpm --filter @jobnest/server build",
+    "lint": "pnpm --filter @jobnest/web lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6"
+  }
+}
