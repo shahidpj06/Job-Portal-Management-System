@@ -95,7 +95,7 @@ export function AdminJobsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{job.applicationCount}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatRelativeDate(job.postedAt)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatRelativeDate(job.createdAt)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
@@ -144,7 +144,7 @@ export function AdminJobsPage() {
                   <Badge className={`border text-xs ${JOB_STATUS_COLORS[job.status]}`}>{job.status}</Badge>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{job.applicationCount} applicants · {formatRelativeDate(job.postedAt)}</span>
+                  <span>{job.applicationCount} applicants · {formatRelativeDate(job.createdAt)}</span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                       <Link to={PATHS.ADMIN.EDIT_JOB(job.id)}><Edit className="h-3.5 w-3.5" /></Link>

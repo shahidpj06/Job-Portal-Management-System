@@ -157,7 +157,7 @@ export function JobsListPage() {
     if (minSalaryParam > 50 && job.salary.max < minSalaryParam * 1000) return false;
 
     if (datePostedParam !== "all") {
-      const postDate = new Date(job.postedAt).getTime();
+      const postDate = new Date(job.createdAt).getTime();
       const refTime = 1773000000000;
       const diffHours = Math.max(0, (refTime - postDate) / (1000 * 60 * 60));
       if (datePostedParam === "24h" && diffHours > 24) return false;
@@ -171,7 +171,7 @@ export function JobsListPage() {
   // Sort
   const sortedJobs = [...filteredJobs];
   if (sortParam === "newest") {
-    sortedJobs.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+    sortedJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } else if (sortParam === "highest_salary") {
     sortedJobs.sort((a, b) => b.salary.max - a.salary.max);
   }

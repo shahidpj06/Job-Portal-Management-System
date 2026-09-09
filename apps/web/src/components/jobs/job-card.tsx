@@ -101,7 +101,7 @@ export function JobCard({ job, compact = false, className = "" }: JobCardProps) 
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {formatRelativeDate(job.postedAt)}
+                  {formatRelativeDate(job.createdAt)}
                 </span>
               </div>
 
