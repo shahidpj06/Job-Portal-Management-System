@@ -42,7 +42,7 @@ export interface Job {
   skills: string[];
   benefits: string[];
   applicationDeadline?: string;
-  postedAt: string;
+  createdAt: string;
   updatedAt: string;
   applicationCount: number;
 }

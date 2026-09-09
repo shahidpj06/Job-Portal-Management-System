@@ -113,7 +113,7 @@ export function JobsFeedCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                Posted {formatRelativeDate(job.postedAt)}
+                Posted {formatRelativeDate(job.createdAt)}
               </span>
             </div>
           </div>

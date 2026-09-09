@@ -92,7 +92,7 @@ export function JobDetailPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><Building2 className="h-4 w-4" />{job.company.name}</span>
                     <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{job.location}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" />Posted {formatRelativeDate(job.postedAt)}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" />Posted {formatRelativeDate(job.createdAt)}</span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Badge variant="secondary">{formatEmploymentType(job.employmentType)}</Badge>

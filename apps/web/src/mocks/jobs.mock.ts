@@ -53,7 +53,7 @@ const generateMockJobs = (): Job[] => {
       ],
       skills: ["Teamwork", "Communication", "Problem Solving", "Agile"],
       benefits: ["Health Insurance", "401k Match", "Flexible PTO", "Remote Work Options"],
-      postedAt: new Date(Date.now() - (i * 86400000)).toISOString(),
+      createdAt: new Date(Date.now() - (i * 86400000)).toISOString(),
       updatedAt: new Date(Date.now() - (i * 86400000)).toISOString(),
       applicationCount: Math.floor(Math.random() * 50),
     });

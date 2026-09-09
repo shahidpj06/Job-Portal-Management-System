@@ -87,7 +87,7 @@ export function AdminDashboardPage() {
               <div key={job.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{job.title}</p>
-                  <p className="text-xs text-muted-foreground">{job.company.name} · {formatRelativeDate(job.postedAt)}</p>
+                  <p className="text-xs text-muted-foreground">{job.company.name} · {formatRelativeDate(job.createdAt)}</p>
                 </div>
                 <Badge
                   className={`ml-2 shrink-0 text-xs ${

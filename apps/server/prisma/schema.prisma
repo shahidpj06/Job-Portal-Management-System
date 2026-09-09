@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum JobCategory {
+  ENGINEERING
+  DESIGN
+  PRODUCT
+  MARKETING
+  SALES
+  OPERATIONS
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ON_SITE
+}
+
+enum ExperienceLevel {
+  ENTRY_LEVEL
+  MID_LEVEL
+  SENIOR_LEVEL
+  DIRECTOR
+  EXECUTIVE
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  REVIEWING
+  INTERVIEWING
+  OFFER
+  REJECTED
+  HIRED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
+
+  phone     String?
+  location  String?
+  headline  String?
+  bio       String?  @db.Text
+  skills    String[] @default([])
+  avatarUrl String?  @map("avatar_url")
+  resumeUrl String?  @map("resume_url")
+
+  refreshTokens RefreshToken[]
+  applications  Application[]
+  createdJobs   Job[]          @relation("JobsCreatedBy")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Job {
+  id              String          @id @default(cuid())
+  title           String
+  companyName     String          @map("company_name")
+  companyLogoUrl  String?         @map("company_logo_url")
+  category        JobCategory
+  experienceLevel ExperienceLevel @map("experience_level")
+  employmentType  EmploymentType  @map("employment_type")
+  workMode        WorkMode        @map("work_mode")
+  location        String
+
+  salaryMin Int?   @map("salary_min")
+  salaryMax Int?   @map("salary_max")
+  currency  String @default("USD")
+
+  summary          String   @db.Text
+  description      String   @db.Text
+  responsibilities String[] @default([])
+  requirements     String[] @default([])
+  skills           String[] @default([])
+  benefits         String[] @default([])
+
+  applicationDeadline DateTime? @map("application_deadline")
+  status              JobStatus @default(DRAFT)
+
+  createdById  String        @map("created_by_id")
+  createdBy    User          @relation("JobsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, category])
+  @@index([workMode])
+  @@index([experienceLevel])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  userId      String            @map("user_id")
+  jobId       String            @map("job_id")
+  resumeUrl   String?           @map("resume_url")
+  coverLetter String?           @map("cover_letter") @db.Text
+  status      ApplicationStatus @default(SUBMITTED)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
+  @@map("applications")
+}
