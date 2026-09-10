@@ -17,7 +17,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { mockJobs, mockCategories } from "@/mocks";
-import { useMockSession } from "@/providers/mock-session-provider";
 import {
   formatSalary, formatRelativeDate, formatEmploymentType,
   formatWorkMode, formatExperience,
@@ -25,6 +24,7 @@ import {
 import { PATHS } from "@/utils/paths";
 import { JobCard } from "@/components/jobs";
 import { ErrorState } from "@/components/common";
+import { useAuthSession } from "@/services/auth/use-auth-session";
 
 function Label2({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return <label htmlFor={htmlFor} className="text-sm font-medium">{children}</label>;
@@ -33,7 +33,7 @@ void Label2;
 
 export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated } = useMockSession();
+  const { isAuthenticated } = useAuthSession();
   const navigate = useNavigate();
   const [applyOpen, setApplyOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");

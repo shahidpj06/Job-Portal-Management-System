@@ -1,14 +1,15 @@
 import { RouterProvider } from "react-router-dom";
-import { MockSessionProvider } from "@/providers/mock-session-provider";
+
 import { router } from "@/app/router";
 import { Toaster } from "@/components/ui/sonner";
+import { AppProviders } from "@/providers/app-providers";
 
 function App() {
   return (
-    <MockSessionProvider>
+    <AppProviders>
       <RouterProvider router={router} />
       <Toaster />
-    </MockSessionProvider>
+    </AppProviders>
   );
 }
 
