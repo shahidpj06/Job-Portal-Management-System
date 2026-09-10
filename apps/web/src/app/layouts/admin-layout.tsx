@@ -1,25 +1,22 @@
-import { Outlet } from "react-router-dom";
-import { AdminSidebar, AdminTopbar } from "@/components/layout";
-import { useMockSession } from "@/providers/mock-session-provider";
-import { LoginPage } from "@/views/auth/login-page";
+import { Outlet } from 'react-router-dom';
 
-export function AdminLayout() {
-  const { isAuthenticated, isAdmin } = useMockSession();
+import { RouteGuard } from '../guards/route-guard';
+import { AdminSidebar, AdminTopbar } from '@/components/layout';
 
-  // Guard: only admin users can access this layout
-  if (!isAuthenticated || !isAdmin) {
-    return <LoginPage />;
-  }
-
+export const AdminLayout = () => {
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <AdminSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <AdminTopbar />
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
+    <RouteGuard allowedRoles={['ADMIN']}>
+      <div className='flex h-screen overflow-hidden bg-background'>
+        <AdminSidebar />
+
+        <div className='flex flex-1 flex-col overflow-hidden'>
+          <AdminTopbar />
+
+          <main className='flex-1 overflow-y-auto'>
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </RouteGuard>
   );
 }

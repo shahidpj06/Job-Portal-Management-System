@@ -12,3 +12,5 @@ The Job Portal App Changes
   [FEATURE] Server: Built the Database Foundation: PostgreSQL, Prisma Schema, and Seed Data
 - [JBM-8](https://shahidpj06.atlassian.net/browse/JBM-8)
   [FEATURE] Server: Authentication API: JWT, Refresh Tokens, and Authorization
+- [JBM-10](https://shahidpj06.atlassian.net/browse/JBM-10)
+  [FEATURE] App: Frontend Authentication Integration - Redux, RTK Query, Session and Route Guards
