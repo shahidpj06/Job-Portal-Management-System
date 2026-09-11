@@ -5,9 +5,10 @@ import express from "express";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import { notFoundHandler } from "./middlewares/not-found.middleware.js";
 import { sendSuccess } from "./tools/api-response.js";
-import { authRouter } from "./apis/index.js";
+import { authRouter, adminJobsRouter } from "./apis/index.js";
 
 const app = express();
+const baseRoute = "/api/v1";
 
 app.use(
   cors({
@@ -19,7 +20,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.get("/api/v1/health", (_request, response) => {
+app.get(`${baseRoute}/health`, (_request, response) => {
   return sendSuccess(response, {
     data: {
       status: "ok",
@@ -28,7 +29,8 @@ app.get("/api/v1/health", (_request, response) => {
   });
 });
 
-app.use("/api/v1/auth", authRouter);
+app.use(`${baseRoute}/auth`, authRouter);
+app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
