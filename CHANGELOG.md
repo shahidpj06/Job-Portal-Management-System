@@ -14,3 +14,5 @@ The Job Portal App Changes
   [FEATURE] Server: Authentication API: JWT, Refresh Tokens, and Authorization
 - [JBM-10](https://shahidpj06.atlassian.net/browse/JBM-10)
   [FEATURE] App: Frontend Authentication Integration - Redux, RTK Query, Session and Route Guards
+- [JBM-12](https://shahidpj06.atlassian.net/browse/JBM-12)
+  [FEATURE] Server: Job CRUD Apis for Admin

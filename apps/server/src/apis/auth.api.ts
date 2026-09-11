@@ -63,6 +63,25 @@ authRouter.post(
   }),
 );
 
+authRouter.post(
+  "/refresh",
+  asyncHandler(async (request, response) => {
+    const session = await AuthDataService.refresh(
+      getRefreshTokenFromRequest(request),
+    );
+
+    AuthCookieHelper.setRefreshToken(response, session.refreshToken);
+
+    return sendSuccess(response, {
+      message: "Session refreshed successfully.",
+      data: {
+        user: session.user,
+        accessToken: session.accessToken,
+      },
+    });
+  }),
+);
+
 authRouter.get(
   "/me",
   authenticate,
@@ -81,25 +100,6 @@ authRouter.get(
       message: "Current user retrieved successfully.",
       data: {
         user,
-      },
-    });
-  }),
-);
-
-authRouter.post(
-  "/refresh",
-  asyncHandler(async (request, response) => {
-    const session = await AuthDataService.refresh(
-      getRefreshTokenFromRequest(request),
-    );
-
-    AuthCookieHelper.setRefreshToken(response, session.refreshToken);
-
-    return sendSuccess(response, {
-      message: "Session refreshed successfully.",
-      data: {
-        user: session.user,
-        accessToken: session.accessToken,
       },
     });
   }),
