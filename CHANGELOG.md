@@ -23,3 +23,5 @@ The Job Portal App Changes
 
 - [JBM-11](https://shahidpj06.atlassian.net/browse/JBM-11)
   [IMPROVEMENT] App: Make the Form Fields reusable and Refactor the Auth UI
+- [JBM-14](https://shahidpj06.atlassian.net/browse/JBM-14)
+  [IMPROVEMENT] App: Refactor the Jobs Admin UI
