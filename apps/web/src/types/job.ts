@@ -1,48 +1,132 @@
-export type JobStatus = "PUBLISHED" | "DRAFT" | "CLOSED";
+import type { IPaginatedResult } from './common';
+import type { ICompany } from './company';
 
-export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP";
-export type WorkMode = "REMOTE" | "HYBRID" | "ON_SITE";
-export type ExperienceLevel = "ENTRY_LEVEL" | "MID_LEVEL" | "SENIOR_LEVEL" | "DIRECTOR" | "EXECUTIVE";
+export type EmploymentType = 'CONTRACT' | 'FREELANCE' | 'FULL_TIME' | 'INTERNSHIP' | 'PART_TIME';
 
+export type ExperienceLevel =
+  'DIRECTOR' | 'ENTRY_LEVEL' | 'EXECUTIVE' | 'MID_LEVEL' | 'SENIOR_LEVEL';
+
+export type JobCategoryCode =
+  'DESIGN' | 'ENGINEERING' | 'MARKETING' | 'OPERATIONS' | 'PRODUCT' | 'SALES';
+
+export type JobStatus = 'CLOSED' | 'DRAFT' | 'PUBLISHED';
+
+export type WorkMode = 'HYBRID' | 'ON_SITE' | 'REMOTE';
+
+/*
+ * Temporary UI models used by the public mock-data pages.
+ * Remove these after those pages are connected to the API.
+ */
 export interface SalaryRange {
-  min: number;
-  max: number;
   currency: string;
+  max: number;
+  min: number;
 }
 
 export interface JobCategory {
-  id: string;
-  name: string;
-  icon?: string;
-  jobCount?: number;
   description?: string;
+  icon?: string;
+  id: string;
+  jobCount?: number;
+  name: string;
 }
 
 export interface CompanyInfo {
-  name: string;
-  logoUrl?: string;
-  website?: string;
   description?: string;
+  logoUrl?: string;
+  name: string;
+  website?: string;
 }
 
 export interface Job {
-  id: string;
-  title: string;
-  company: CompanyInfo;
-  categoryId: string;
-  location: string;
-  employmentType: EmploymentType;
-  workMode: WorkMode;
-  experienceLevel: ExperienceLevel;
-  salary: SalaryRange;
-  status: JobStatus;
-  overview: string;
-  responsibilities: string[];
-  requirements: string[];
-  skills: string[];
-  benefits: string[];
-  applicationDeadline?: string;
-  createdAt: string;
-  updatedAt: string;
   applicationCount: number;
+  applicationDeadline?: string;
+  benefits: string[];
+  categoryId: string;
+  company: CompanyInfo;
+  createdAt: string;
+  employmentType: EmploymentType;
+  experienceLevel: ExperienceLevel;
+  id: string;
+  location: string;
+  overview: string;
+  requirements: string[];
+  responsibilities: string[];
+  salary: SalaryRange;
+  skills: string[];
+  status: JobStatus;
+  title: string;
+  updatedAt: string;
+  workMode: WorkMode;
+}
+
+/*
+ * Real backend API contracts.
+ */
+
+export interface IJobData {
+  applicationCount: number;
+  applicationDeadline: string | null;
+  benefits: string[];
+  category: JobCategoryCode;
+  company: ICompany;
+  createdAt: string;
+  currency: string;
+  description: string;
+  employmentType: EmploymentType;
+  experienceLevel: ExperienceLevel;
+  id: string;
+  location: string;
+  requirements: string[];
+  responsibilities: string[];
+  salaryMax: number | null;
+  salaryMin: number | null;
+  skills: string[];
+  status: JobStatus;
+  summary: string;
+  title: string;
+  updatedAt: string;
+  workMode: WorkMode;
+}
+
+export interface IJobListQuery {
+  category?: JobCategoryCode;
+  experienceLevel?: ExperienceLevel;
+  limit?: number;
+  page?: number;
+  search?: string;
+}
+
+export interface ICreateJobRequest {
+  applicationDeadline?: string | null;
+  benefits?: string[];
+  category: JobCategoryCode;
+  companyId: string;
+  currency?: string;
+  description: string;
+  employmentType: EmploymentType;
+  experienceLevel: ExperienceLevel;
+  location: string;
+  requirements?: string[];
+  responsibilities?: string[];
+  salaryMax?: number | null;
+  salaryMin?: number | null;
+  skills?: string[];
+  status?: JobStatus;
+  summary: string;
+  title: string;
+  workMode: WorkMode;
+}
+
+export interface IUpdateJobMutationArguments {
+  data: IUpdateJobRequest;
+  jobId: string;
+}
+
+export type IUpdateJobRequest = Partial<ICreateJobRequest>;
+
+export type IJobListResult = IPaginatedResult<IJobData>;
+
+export interface IJobMutationResult {
+  job: IJobData;
 }

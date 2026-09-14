@@ -1,4 +1,5 @@
-import { authRouter } from "./auth.api.js";
+import { adminCompaniesRouter } from "./admin/companies.api.js";
 import { adminJobsRouter } from "./admin/jobs.api.js";
+import { authRouter } from "./auth.api.js";
 
-export { adminJobsRouter, authRouter };
+export { adminCompaniesRouter, adminJobsRouter, authRouter };

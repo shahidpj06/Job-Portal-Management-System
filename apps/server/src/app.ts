@@ -5,7 +5,11 @@ import express from "express";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import { notFoundHandler } from "./middlewares/not-found.middleware.js";
 import { sendSuccess } from "./tools/api-response.js";
-import { authRouter, adminJobsRouter } from "./apis/index.js";
+import {
+  adminCompaniesRouter,
+  adminJobsRouter,
+  authRouter,
+} from "./apis/index.js";
 
 const app = express();
 const baseRoute = "/api/v1";
@@ -30,6 +34,7 @@ app.get(`${baseRoute}/health`, (_request, response) => {
 });
 
 app.use(`${baseRoute}/auth`, authRouter);
+app.use(`${baseRoute}/admin/companies`, adminCompaniesRouter);
 app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
 
 app.use(notFoundHandler);

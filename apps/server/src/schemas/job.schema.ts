@@ -22,32 +22,14 @@ const optionalTextList = z.array(z.string().trim().min(1)).default([]);
 
 const jobFields = {
   title: requiredText("Job title", 3),
-
-  companyName: requiredText("Company name"),
-
-  companyLogoUrl: z
-    .union([
-      z.string().trim().url("Company logo must be a valid URL."),
-      z.literal(""),
-    ])
-    .optional()
-    .nullable()
-    .transform((value) => value || null),
-
+  companyId: requiredText("Company ID", 1),
   category: z.enum(JobCategory),
-
   experienceLevel: z.enum(ExperienceLevel),
-
   employmentType: z.enum(EmploymentType),
-
   workMode: z.enum(WorkMode),
-
   location: requiredText("Location"),
-
   salaryMin: z.number().int().nonnegative().optional().nullable(),
-
   salaryMax: z.number().int().nonnegative().optional().nullable(),
-
   currency: z
     .string()
     .trim()
@@ -56,19 +38,12 @@ const jobFields = {
     .default("INR"),
 
   summary: requiredText("Job summary", 20),
-
   description: requiredText("Job description", 20),
-
   responsibilities: optionalTextList,
-
   requirements: optionalTextList,
-
   skills: optionalTextList,
-
   benefits: optionalTextList,
-
   applicationDeadline: z.coerce.date().optional().nullable(),
-
   status: z.enum(JobStatus).default(JobStatus.DRAFT),
 };
 
@@ -120,13 +95,9 @@ export const jobIdParamsSchema = z.object({
 
 export const listJobsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-
   limit: z.coerce.number().int().min(1).max(100).default(10),
-
   category: z.enum(JobCategory).optional(),
-
   experienceLevel: z.enum(ExperienceLevel).optional(),
-
   search: z.string().trim().max(100).optional(),
 });
 
