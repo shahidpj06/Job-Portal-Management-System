@@ -98,11 +98,27 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model Company {
+  id          String  @id @default(cuid())
+  description String? @db.Text
+  logoUrl     String? @map("logo_url")
+  name        String  @unique
+  websiteUrl  String? @map("website_url")
+
+  jobs Job[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
+}
+
 model Job {
-  id              String          @id @default(cuid())
-  title           String
-  companyName     String          @map("company_name")
-  companyLogoUrl  String?         @map("company_logo_url")
+  id        String  @id @default(cuid())
+  title     String
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
   category        JobCategory
   experienceLevel ExperienceLevel @map("experience_level")
   employmentType  EmploymentType  @map("employment_type")
@@ -134,6 +150,7 @@ model Job {
   @@index([workMode])
   @@index([experienceLevel])
   @@index([createdAt])
+  @@index([companyId])
   @@map("jobs")
 }
 

@@ -1,4 +1,14 @@
 export const routes = {
+  admin: {
+    companies: {
+      root: 'admin/companies'
+    },
+    jobs: {
+      byId: (jobId: string) => `admin/jobs/${jobId}`,
+      root: 'admin/jobs'
+    }
+  },
+
   auth: {
     register: 'auth/register',
     login: 'auth/login',

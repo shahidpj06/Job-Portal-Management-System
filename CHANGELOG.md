@@ -16,3 +16,5 @@ The Job Portal App Changes
   [FEATURE] App: Frontend Authentication Integration - Redux, RTK Query, Session and Route Guards
 - [JBM-12](https://shahidpj06.atlassian.net/browse/JBM-12)
   [FEATURE] Server: Job CRUD Apis for Admin
+- [JBM-13](https://shahidpj06.atlassian.net/browse/JBM-13)
+  [FEATURE] App: Integrate Admin Jobs UI with RTK Query

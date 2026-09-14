@@ -1,7 +1,8 @@
-import { Job } from "../generated/prisma/client.js";
+import type { Company, Job } from "../generated/prisma/client.js";
 
 export type JobData = Job & {
   applicationCount: number;
+  company: Company;
 };
 
 export interface IJobPaginationMetadata {
@@ -14,6 +15,6 @@ export interface IJobPaginationMetadata {
 }
 
 export interface IJobListResult {
-    items: JobData[];
-    pagination: IJobPaginationMetadata
+  items: JobData[];
+  pagination: IJobPaginationMetadata;
 }

@@ -8,6 +8,7 @@ import {
   ExperienceLevel,
   JobCategory,
   JobStatus,
+  Prisma,
   PrismaClient,
   UserRole,
   WorkMode,
@@ -35,10 +36,41 @@ const daysFromNow = (days: number) => {
   return date;
 };
 
+const companySeedData = [
+  {
+    description: "An AI company building innovative technology products.",
+    logoUrl: null,
+    name: "Innovate AI",
+    websiteUrl: "https://innovate-ai.example.com",
+  },
+  {
+    description: "A product engineering and technology company.",
+    logoUrl: null,
+    name: "Northstar Labs",
+    websiteUrl: "https://northstar-labs.example.com",
+  },
+] satisfies Prisma.CompanyCreateInput[];
+
+await Promise.all(
+  companySeedData.map((company) =>
+    prisma.company.upsert({
+      where: {
+        name: company.name,
+      },
+      create: company,
+      update: company,
+    }),
+  ),
+);
+
 const jobSeeds = [
   {
     title: "Senior Backend Engineer",
-    companyName: "Innovate AI",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.ENGINEERING,
     location: "Tokyo, Japan",
     employmentType: EmploymentType.FULL_TIME,
@@ -49,7 +81,11 @@ const jobSeeds = [
   },
   {
     title: "Frontend Developer",
-    companyName: "Northstar Labs",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.ENGINEERING,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -60,7 +96,11 @@ const jobSeeds = [
   },
   {
     title: "Cloud Infrastructure Engineer",
-    companyName: "Vertex Systems",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.ENGINEERING,
     location: "Singapore",
     employmentType: EmploymentType.FULL_TIME,
@@ -71,7 +111,11 @@ const jobSeeds = [
   },
   {
     title: "Product Designer",
-    companyName: "Studio Forge",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.DESIGN,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -82,7 +126,11 @@ const jobSeeds = [
   },
   {
     title: "UX Researcher",
-    companyName: "People First",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.DESIGN,
     location: "Bengaluru, India",
     employmentType: EmploymentType.CONTRACT,
@@ -93,7 +141,11 @@ const jobSeeds = [
   },
   {
     title: "Senior Product Manager",
-    companyName: "Momentum Works",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.PRODUCT,
     location: "Singapore",
     employmentType: EmploymentType.FULL_TIME,
@@ -104,7 +156,11 @@ const jobSeeds = [
   },
   {
     title: "Associate Product Manager",
-    companyName: "Launchpad",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.PRODUCT,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -115,7 +171,11 @@ const jobSeeds = [
   },
   {
     title: "Growth Marketing Manager",
-    companyName: "ScaleCraft",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.MARKETING,
     location: "Mumbai, India",
     employmentType: EmploymentType.FULL_TIME,
@@ -126,7 +186,11 @@ const jobSeeds = [
   },
   {
     title: "Content Marketing Specialist",
-    companyName: "Brightside",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.MARKETING,
     location: "Remote",
     employmentType: EmploymentType.FREELANCE,
@@ -137,7 +201,11 @@ const jobSeeds = [
   },
   {
     title: "Enterprise Account Executive",
-    companyName: "Orbit Sales",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.SALES,
     location: "New York, NY",
     employmentType: EmploymentType.FULL_TIME,
@@ -148,7 +216,11 @@ const jobSeeds = [
   },
   {
     title: "Sales Development Representative",
-    companyName: "Pipeline Pro",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.SALES,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -159,7 +231,11 @@ const jobSeeds = [
   },
   {
     title: "People Operations Manager",
-    companyName: "Culture Collective",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.OPERATIONS,
     location: "Bengaluru, India",
     employmentType: EmploymentType.FULL_TIME,
@@ -170,7 +246,11 @@ const jobSeeds = [
   },
   {
     title: "Customer Support Lead",
-    companyName: "CareCloud",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.OPERATIONS,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -181,7 +261,11 @@ const jobSeeds = [
   },
   {
     title: "Machine Learning Engineer",
-    companyName: "Neural Path",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.ENGINEERING,
     location: "Tokyo, Japan",
     employmentType: EmploymentType.FULL_TIME,
@@ -192,7 +276,11 @@ const jobSeeds = [
   },
   {
     title: "Visual Designer",
-    companyName: "Pixel & Co.",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.DESIGN,
     location: "Remote",
     employmentType: EmploymentType.PART_TIME,
@@ -203,7 +291,11 @@ const jobSeeds = [
   },
   {
     title: "Business Operations Analyst",
-    companyName: "ClearPath",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.OPERATIONS,
     location: "Singapore",
     employmentType: EmploymentType.FULL_TIME,
@@ -214,7 +306,11 @@ const jobSeeds = [
   },
   {
     title: "Product Marketing Manager",
-    companyName: "Signal House",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.MARKETING,
     location: "Remote",
     employmentType: EmploymentType.FULL_TIME,
@@ -225,7 +321,11 @@ const jobSeeds = [
   },
   {
     title: "Platform Engineer",
-    companyName: "Foundation Stack",
+    company: {
+      connect: {
+        name: "Innovate AI",
+      },
+    },
     category: JobCategory.ENGINEERING,
     location: "Tokyo, Japan",
     employmentType: EmploymentType.FULL_TIME,
@@ -282,42 +382,53 @@ async function main() {
     },
   });
 
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const seedTimestamp = Date.now();
+
   const createdJobs = await Promise.all(
-    jobSeeds.map((job, index) =>
-      prisma.job.create({
+    jobSeeds.map((job, index) => {
+      const companyName = job.company.connect.name;
+
+      return prisma.job.create({
         data: {
           ...job,
-          currency: "USD",
-          summary: `Join ${job.companyName} as a ${job.title} and help build products that make a measurable impact.`,
-          description: `We are looking for a thoughtful ${job.title} to join our growing team. You will collaborate with talented people, solve meaningful problems, and help create excellent customer experiences.`,
-          responsibilities: [
-            "Build and improve high-quality product experiences.",
-            "Collaborate with cross-functional partners.",
-            "Contribute to thoughtful technical and product decisions.",
-          ],
-          requirements: [
-            "Relevant professional experience or equivalent practical knowledge.",
-            "Strong communication and collaboration skills.",
-            "A quality-focused and customer-centered mindset.",
-          ],
-          skills: ["Communication", "Problem Solving", "Collaboration", "Agile"],
+          applicationDeadline: new Date(
+            seedTimestamp + (30 - index) * millisecondsPerDay,
+          ),
           benefits: [
             "Flexible working arrangements",
             "Learning and development budget",
             "Health and wellness support",
           ],
-          applicationDeadline: daysFromNow(30 - index),
-          createdAt: daysAgo(index + 1),
-          status:
-            index === jobSeeds.length - 1
-              ? JobStatus.CLOSED
-              : index === jobSeeds.length - 2
-                ? JobStatus.DRAFT
-                : JobStatus.PUBLISHED,
-          createdById: admin.id,
+          createdAt: new Date(seedTimestamp - index * millisecondsPerDay),
+          createdBy: {
+            connect: {
+              id: admin.id,
+            },
+          },
+          currency: "USD",
+          description: `We are looking for a thoughtful ${job.title} to join our growing team. You will collaborate with talented people, solve meaningful problems, and help create excellent customer experiences.`,
+          requirements: [
+            "Relevant professional experience or equivalent practical knowledge.",
+            "Strong communication and collaboration skills.",
+            "A quality-focused and customer-centered mindset.",
+          ],
+          responsibilities: [
+            "Build and improve high-quality product experiences.",
+            "Collaborate with cross-functional partners.",
+            "Contribute to thoughtful technical and product decisions.",
+          ],
+          skills: [
+            "Communication",
+            "Problem Solving",
+            "Collaboration",
+            "Agile",
+          ],
+          status: JobStatus.PUBLISHED,
+          summary: `Join ${companyName} as a ${job.title} and help build products that make a measurable impact.`,
         },
-      }),
-    ),
+      });
+    }),
   );
 
   const publishedJobs = createdJobs.filter(

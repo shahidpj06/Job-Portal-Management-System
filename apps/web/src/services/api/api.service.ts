@@ -95,6 +95,6 @@ const baseQueryWithReauth: BaseQueryFn<QueryArgs, unknown, FetchBaseQueryError> 
 export const apiService = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Auth', 'Job', 'Application'],
+  tagTypes: ['Auth', 'Job', 'Company', 'Application'],
   endpoints: () => ({})
 });

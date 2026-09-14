@@ -13,22 +13,23 @@ import {
   JobData,
 } from "../types/job.js";
 
-const JOB_RELATION_COUNT_INCLUDE = {
+const JOB_RELATIONS_INCLUDE = {
   _count: {
     select: {
       applications: true,
     },
   },
+  company: true,
 } satisfies Prisma.JobInclude;
 
 const JOB_SORT_ORDER = "desc" as const;
 const TEXT_SEARCH_MODE = "insensitive" as const;
 
-type JobWithApplicationCount = Prisma.JobGetPayload<{
-  include: typeof JOB_RELATION_COUNT_INCLUDE;
+type JobWithRelations = Prisma.JobGetPayload<{
+  include: typeof JOB_RELATIONS_INCLUDE;
 }>;
 
-const jobDataFromRecord = (jobRecord: JobWithApplicationCount): JobData => {
+const jobDataFromRecord = (jobRecord: JobWithRelations): JobData => {
   const { _count: relationCounts, ...jobData } = jobRecord;
 
   return {
@@ -65,12 +66,12 @@ const jobPaginationMetadataBuild = (
 const jobRecordGetById = async (
   jobId: string,
   database: PrismaClient,
-): Promise<JobWithApplicationCount> => {
+): Promise<JobWithRelations> => {
   const jobRecord = await database.job.findUnique({
     where: {
       id: jobId,
     },
-    include: JOB_RELATION_COUNT_INCLUDE,
+    include: JOB_RELATIONS_INCLUDE,
   });
 
   if (!jobRecord) {
@@ -82,7 +83,7 @@ const jobRecordGetById = async (
 
 const jobSalaryRangeValidate = (
   input: UpdateJobInput,
-  existingJob: JobWithApplicationCount,
+  existingJob: JobWithRelations,
 ): void => {
   const salaryMaximum =
     input.salaryMax === undefined ? existingJob.salaryMax : input.salaryMax;
@@ -108,9 +109,11 @@ const jobWhereInputBuild = (query: ListJobsQuery): Prisma.JobWhereInput => {
     ? {
         OR: [
           {
-            companyName: {
-              contains: query.search,
-              mode: TEXT_SEARCH_MODE,
+            company: {
+              name: {
+                contains: query.search,
+                mode: TEXT_SEARCH_MODE,
+              },
             },
           },
           {
@@ -148,12 +151,23 @@ export const JobDataService = {
     createdById: string,
     database: PrismaClient = prisma,
   ): Promise<JobData> => {
+    const { companyId, ...jobInput } = input;
+
     const jobRecord = await database.job.create({
       data: {
-        ...input,
-        createdById,
+        ...jobInput,
+        company: {
+          connect: {
+            id: companyId,
+          },
+        },
+        createdBy: {
+          connect: {
+            id: createdById,
+          },
+        },
       },
-      include: JOB_RELATION_COUNT_INCLUDE,
+      include: JOB_RELATIONS_INCLUDE,
     });
 
     return jobDataFromRecord(jobRecord);
@@ -191,7 +205,7 @@ export const JobDataService = {
     const [jobRecords, totalItems] = await database.$transaction([
       database.job.findMany({
         where,
-        include: JOB_RELATION_COUNT_INCLUDE,
+        include: JOB_RELATIONS_INCLUDE,
         orderBy: {
           createdAt: JOB_SORT_ORDER,
         },
@@ -221,13 +235,25 @@ export const JobDataService = {
     const existingJob = await jobRecordGetById(jobId, database);
 
     jobSalaryRangeValidate(input, existingJob);
+    const { companyId, ...jobInput } = input;
 
     const updatedJobRecord = await database.job.update({
       where: {
         id: jobId,
       },
-      data: input,
-      include: JOB_RELATION_COUNT_INCLUDE,
+      data: {
+        ...jobInput,
+        ...(companyId
+          ? {
+              company: {
+                connect: {
+                  id: companyId,
+                },
+              },
+            }
+          : {}),
+      },
+      include: JOB_RELATIONS_INCLUDE,
     });
 
     return jobDataFromRecord(updatedJobRecord);
