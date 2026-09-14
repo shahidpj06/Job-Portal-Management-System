@@ -10,7 +10,8 @@ export type JobCategoryCode =
   'DESIGN' | 'ENGINEERING' | 'MARKETING' | 'OPERATIONS' | 'PRODUCT' | 'SALES';
 
 export type JobStatus = 'CLOSED' | 'DRAFT' | 'PUBLISHED';
-
+export type JobSort = 'newest' | 'highest_salary';
+export type JobDatePosted = '24h' | '7d' | '30d';
 export type WorkMode = 'HYBRID' | 'ON_SITE' | 'REMOTE';
 
 /*
@@ -95,6 +96,18 @@ export interface IJobListQuery {
   limit?: number;
   page?: number;
   search?: string;
+}
+
+export interface IPublicJobListQuery
+  extends Omit<IJobListQuery, 'experienceLevel'> {
+  currency?: string;
+  datePosted?: JobDatePosted;
+  employmentType?: EmploymentType[];
+  experienceLevel?: ExperienceLevel[];
+  location?: string;
+  minSalary?: number;
+  sort?: JobSort;
+  workMode?: WorkMode;
 }
 
 export interface ICreateJobRequest {

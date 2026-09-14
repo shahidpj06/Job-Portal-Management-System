@@ -9,7 +9,7 @@ import { Field, SimpleForm } from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 import { SIGNUP_DEFAULT_VALUES, signupSchema, type SignupFormData } from './auth-form.schemas';
 
@@ -38,7 +38,7 @@ export const SignupPage = () => {
 
         toast.success('Your account has been created.');
 
-        navigate(PATHS.JOBS, { replace: true });
+        navigate(paths.jobs, { replace: true });
       } catch (error) {
         toast.error(getApiErrorMessage(error, 'Unable to create your account.'));
       }
@@ -55,7 +55,7 @@ export const SignupPage = () => {
       footer={
         <>
           Already have an account?{' '}
-          <Link className='font-medium text-primary hover:underline' to={PATHS.LOGIN}>
+          <Link className='font-medium text-primary hover:underline' to={paths.auth.login}>
             Sign in
           </Link>
         </>

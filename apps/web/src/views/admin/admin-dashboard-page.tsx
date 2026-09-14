@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mockDashboardMetrics, mockJobs, mockApplications } from "@/mocks";
 import { formatRelativeDate, formatApplicationStatus } from "@/utils/formatters";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 
 const RECENT_JOBS = mockJobs.slice(0, 5);
 const RECENT_APPS = mockApplications.slice(0, 5);
@@ -77,7 +77,7 @@ export function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">Recent Job Listings</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={PATHS.ADMIN.JOBS}>
+              <Link to={paths.admin.jobs}>
                 View all <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
@@ -135,13 +135,13 @@ export function AdminDashboardPage() {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3 pt-0">
           <Button asChild>
-            <Link to={PATHS.ADMIN.NEW_JOB}>
+            <Link to={paths.admin['new-job']}>
               <Plus className="mr-1.5 h-4 w-4" />
               Post New Job
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to={PATHS.ADMIN.JOBS}>Manage Jobs</Link>
+            <Link to={paths.admin.jobs}>Manage Jobs</Link>
           </Button>
         </CardContent>
       </Card>

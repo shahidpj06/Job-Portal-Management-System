@@ -9,6 +9,7 @@ import {
   adminCompaniesRouter,
   adminJobsRouter,
   authRouter,
+  jobsRouter,
 } from "./apis/index.js";
 
 const app = express();
@@ -34,6 +35,7 @@ app.get(`${baseRoute}/health`, (_request, response) => {
 });
 
 app.use(`${baseRoute}/auth`, authRouter);
+app.use(`${baseRoute}/jobs`, jobsRouter);
 app.use(`${baseRoute}/admin/companies`, adminCompaniesRouter);
 app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
 

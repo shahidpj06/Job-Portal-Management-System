@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 interface HeroSearchConsoleProps {
   initialQuery?: string;
@@ -27,7 +27,7 @@ export function HeroSearchConsole({
     if (location.trim()) params.set('location', location.trim());
 
     const queryString = params.toString();
-    navigate(queryString ? `${PATHS.JOBS}?${queryString}` : PATHS.JOBS);
+    navigate(queryString ? `${paths.jobs}?${queryString}` : paths.jobs);
   }
 
   return (

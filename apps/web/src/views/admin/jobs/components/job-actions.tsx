@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 import type { IJobData } from '@/types';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 interface IAdminJobActionsProps {
   isDeleting: boolean;
@@ -31,7 +31,7 @@ const AdminJobActionsComponent = ({ isDeleting, job, onDelete }: IAdminJobAction
   return (
     <div className='flex items-center justify-end gap-1'>
       <Button asChild className='h-8 w-8' size='icon' variant='ghost'>
-        <Link aria-label={`Edit ${job.title}`} to={PATHS.ADMIN.EDIT_JOB(job.id)}>
+        <Link aria-label={`Edit ${job.title}`} to={paths.admin['edit-job'](job.id)}>
           <Edit className='h-4 w-4' />
         </Link>
       </Button>
