@@ -18,3 +18,8 @@ The Job Portal App Changes
   [FEATURE] Server: Job CRUD Apis for Admin
 - [JBM-13](https://shahidpj06.atlassian.net/browse/JBM-13)
   [FEATURE] App: Integrate Admin Jobs UI with RTK Query
+
+### Changes
+
+- [JBM-11](https://shahidpj06.atlassian.net/browse/JBM-11)
+  [IMPROVEMENT] App: Make the Form Fields reusable and Refactor the Auth UI

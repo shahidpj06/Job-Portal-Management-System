@@ -1,43 +1,35 @@
-import { useCallback, useState } from 'react';
-import { toast } from 'sonner';
-import { useAuthSession } from '@/services/auth';
-import { getApiErrorMessage } from '@/services/api';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Briefcase } from 'lucide-react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+import { AuthPageCard } from '@/components/auth/auth-page-card';
+import { Field, SimpleForm } from '@/components/form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { getApiErrorMessage } from '@/services/api';
+import { useAuthSession } from '@/services/auth';
 import { PATHS } from '@/utils/paths';
-import { APP_CONFIG } from '@/utils/global-config';
 
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters')
-});
+import { LOGIN_DEFAULT_VALUES, loginSchema, type LoginFormData } from './auth-form.schemas';
 
-type LoginForm = z.infer<typeof loginSchema>;
-
-export function LoginPage() {
-  const { isLoading, login } = useAuthSession();
+export const LoginPage = () => {
+  const { isAdmin, isAuthenticated, isLoading, login } = useAuthSession();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting }
-  } = useForm<LoginForm>({
+  const methods = useForm<LoginFormData>({
+    defaultValues: LOGIN_DEFAULT_VALUES,
     resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = useCallback(
-    async (data: LoginForm) => {
+  const {
+    formState: { isSubmitting }
+  } = methods;
+
+  const onSubmit = useCallback<SubmitHandler<LoginFormData>>(
+    async (formData) => {
       try {
-        const user = await login(data);
+        const user = await login(formData);
 
         toast.success('Welcome back.');
 
@@ -49,77 +41,52 @@ export function LoginPage() {
     [login, navigate]
   );
 
+  if (isAuthenticated) {
+    return <Navigate replace to={isAdmin ? PATHS.ADMIN.DASHBOARD : PATHS.JOBS} />;
+  }
+
+  const isSubmittingForm = isSubmitting || isLoading;
+
   return (
-    <div className='flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 py-12 bg-muted/30'>
-      <Card className='w-full max-w-md'>
-        <CardHeader className='text-center'>
-          <Link
-            to={PATHS.HOME}
-            className='mx-auto mb-4 flex w-fit items-center gap-2 text-lg font-bold text-primary'
-          >
-            <Briefcase className='h-6 w-6' />
-            {APP_CONFIG.name}
+    <AuthPageCard
+      title='Welcome back'
+      description='Sign in to your account to continue'
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
+          <Link className='font-medium text-primary hover:underline' to={PATHS.SIGNUP}>
+            Sign up free
           </Link>
-          <CardTitle className='text-2xl'>Welcome back</CardTitle>
-          <CardDescription>Sign in to your account to continue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4' noValidate>
-            <div className='space-y-1.5'>
-              <Label htmlFor='login-email'>Email</Label>
-              <Input
-                id='login-email'
-                type='email'
-                placeholder='you@example.com'
-                autoComplete='email'
-                {...register('email')}
-              />
-              {errors.email && <p className='text-xs text-destructive'>{errors.email.message}</p>}
-            </div>
+        </>
+      }
+    >
+      <SimpleForm methods={methods} onSubmit={onSubmit} className='space-y-4'>
+        <Field.Text<LoginFormData>
+          name='email'
+          id='login-email'
+          type='email'
+          label='Email'
+          placeholder='you@example.com'
+          autoComplete='email'
+        />
 
-            <div className='space-y-1.5'>
-              <div className='flex items-center justify-between'>
-                <Label htmlFor='login-password'>Password</Label>
-                <Link to={PATHS.FORGOT_PASSWORD} className='text-xs text-primary hover:underline'>
-                  Forgot password?
-                </Link>
-              </div>
-              <div className='relative'>
-                <Input
-                  id='login-password'
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder='••••••••'
-                  autoComplete='current-password'
-                  className='pr-10'
-                  {...register('password')}
-                />
-                <button
-                  type='button'
-                  onClick={() => setShowPassword(!showPassword)}
-                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className='text-xs text-destructive'>{errors.password.message}</p>
-              )}
-            </div>
-
-            <Button type='submit' className='w-full' disabled={isSubmitting || isLoading}>
-              {isSubmitting || isLoading ? 'Signing in…' : 'Sign In'}
-            </Button>
-          </form>
-
-          <p className='mt-5 text-center text-sm text-muted-foreground'>
-            Don&apos;t have an account?{' '}
-            <Link to={PATHS.SIGNUP} className='font-medium text-primary hover:underline'>
-              Sign up free
+        <Field.Password<LoginFormData>
+          name='password'
+          id='login-password'
+          label='Password'
+          placeholder='••••••••'
+          autoComplete='current-password'
+          labelAction={
+            <Link className='text-xs text-primary hover:underline' to={PATHS.FORGOT_PASSWORD}>
+              Forgot password?
             </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+          }
+        />
+
+        <Button className='w-full' disabled={isSubmittingForm} type='submit'>
+          {isSubmittingForm ? 'Signing in…' : 'Sign In'}
+        </Button>
+      </SimpleForm>
+    </AuthPageCard>
   );
-}
+};
