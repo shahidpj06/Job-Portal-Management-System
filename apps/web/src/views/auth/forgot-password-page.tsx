@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 import { APP_CONFIG } from "@/utils/global-config";
 
 const schema = z.object({ email: z.string().email("Please enter a valid email") });
@@ -23,10 +23,10 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 py-12 bg-muted/30">
+    <div className="flex min-h-[calc(90vh-4rem)] flex-col items-center justify-center px-4 py-12 bg-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link to={PATHS.HOME} className="mx-auto mb-4 flex w-fit items-center gap-2 text-lg font-bold text-primary">
+          <Link to={paths.home} className="mx-auto mb-4 flex w-fit items-center gap-2 text-lg font-bold text-primary">
             <Briefcase className="h-6 w-6" />
             {APP_CONFIG.name}
           </Link>
@@ -51,7 +51,7 @@ export function ForgotPasswordPage() {
             </form>
           )}
           <div className="mt-5 text-center">
-            <Link to={PATHS.LOGIN} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <Link to={paths.auth.login} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" /> Back to sign in
             </Link>
           </div>

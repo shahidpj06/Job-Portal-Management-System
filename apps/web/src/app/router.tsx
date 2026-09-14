@@ -1,14 +1,14 @@
 import { AdminDashboardPage } from '@/views/admin/admin-dashboard-page';
 import { AdminJobFormPage } from '@/views/admin/admin-job-form-page';
-import { AdminJobsView } from '@/views/admin/jobs/jobs';
+import { AdminJobsPage } from '@/views/admin/jobs/jobs';
 import { AdminLayout } from './layouts/admin-layout';
 import { AdminProfilePage } from '@/views/admin/admin-profile-page';
 import { ApplicationsPage } from '@/views/candidate/applications-page';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ForgotPasswordPage } from '@/views/auth/forgot-password-page';
 import { HomePage } from '@/views/home/home-page';
-import { JobDetailPage } from '@/views/jobs/job-detail-page';
-import { JobsListPage } from '@/views/jobs/jobs-list-page';
+import { JobDetailPage } from '@/views/job-details/job-detail-page';
+import { JobsPage } from '@/views/jobs/jobs';
 import { LoginPage } from '@/views/auth/login-page';
 import { NotFoundPage } from '@/views/not-found-page';
 import { ProfilePage } from '@/views/profile/profile-page';
@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'jobs',
-        element: <JobsListPage />
+        element: <JobsPage />
       },
       {
         path: 'jobs/:id',
@@ -97,7 +97,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'jobs',
-        element: <AdminJobsView />
+        element: <AdminJobsPage />
       },
       {
         path: 'jobs/new',

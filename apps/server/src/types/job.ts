@@ -5,6 +5,8 @@ export type JobData = Job & {
   company: Company;
 };
 
+export type PublicJobData = Omit<JobData, "createdById">;
+
 export interface IJobPaginationMetadata {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
@@ -16,5 +18,10 @@ export interface IJobPaginationMetadata {
 
 export interface IJobListResult {
   items: JobData[];
+  pagination: IJobPaginationMetadata;
+}
+
+export interface IPublicJobListResult {
+  items: PublicJobData[];
   pagination: IJobPaginationMetadata;
 }

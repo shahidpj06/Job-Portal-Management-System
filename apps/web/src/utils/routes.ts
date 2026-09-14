@@ -8,12 +8,15 @@ export const routes = {
       root: 'admin/jobs'
     }
   },
-
   auth: {
     register: 'auth/register',
     login: 'auth/login',
     refresh: 'auth/refresh',
     logout: 'auth/logout',
     me: 'auth/me'
+  },
+  jobs: {
+    root: 'jobs',
+    byId: (jobId: string) => `jobs/${encodeURIComponent(jobId)}`
   }
 } as const;

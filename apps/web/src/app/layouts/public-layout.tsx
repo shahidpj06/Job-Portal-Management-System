@@ -6,7 +6,7 @@ export const PublicLayout = () => {
     <div className='flex min-h-screen flex-col bg-background'>
       <PublicHeader />
       <main className='flex-1'>
-        <Outlet />
+          <Outlet />
       </main>
       <Footer />
     </div>

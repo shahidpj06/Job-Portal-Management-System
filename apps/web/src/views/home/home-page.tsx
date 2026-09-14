@@ -17,7 +17,7 @@ import {
   mockWhyChoosePoints,
   mockCareerMilestones,
 } from "@/mocks";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 import { APP_CONFIG } from "@/utils/global-config";
 
 // Select 6 published featured jobs (aligns with the reference screenshot)
@@ -64,7 +64,7 @@ export function HomePage() {
             {mockPopularSearches.map((term) => (
               <Link
                 key={term}
-                to={`${PATHS.JOBS}?q=${encodeURIComponent(term)}`}
+                to={`${paths.jobs}?q=${encodeURIComponent(term)}`}
                 className="rounded-md px-1.5 py-0.5 transition-colors hover:text-primary underline underline-offset-4 decoration-border hover:decoration-primary"
               >
                 {term}
@@ -117,7 +117,7 @@ export function HomePage() {
               asChild
               className="rounded-xl self-start sm:self-auto border-border hover:bg-muted font-semibold"
             >
-              <Link to={PATHS.JOBS}>View all</Link>
+              <Link to={paths.jobs}>View all</Link>
             </Button>
           </div>
 
@@ -129,7 +129,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 4. FEATURED JOBS SECTION */}
+      {/* 4. FEATURED jobs SECTION */}
       <section className="border-t border-border/80 bg-muted/30 px-4 py-16 md:py-20">
         <div className="mx-auto max-w-[1200px]">
           <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -147,7 +147,7 @@ export function HomePage() {
               asChild
               className="rounded-xl self-start sm:self-auto border-border hover:bg-muted font-semibold"
             >
-              <Link to={PATHS.JOBS}>
+              <Link to={paths.jobs}>
                 <span>Browse all jobs</span>
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>
@@ -166,7 +166,7 @@ export function HomePage() {
               asChild
               className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 shadow-sm"
             >
-              <Link to={PATHS.JOBS}>
+              <Link to={paths.jobs}>
                 <span>View All Jobs</span>
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -206,7 +206,7 @@ export function HomePage() {
                   asChild
                   className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-7 shadow-sm"
                 >
-                  <Link to={PATHS.SIGNUP}>Get Started Free</Link>
+                  <Link to={paths.auth['sign-up']}>Get Started Free</Link>
                 </Button>
               </div>
             </div>
@@ -234,7 +234,7 @@ export function HomePage() {
               asChild
               className="w-full sm:w-auto rounded-xl bg-surface text-primary hover:bg-surface/90 font-bold px-7 shadow-md"
             >
-              <Link to={PATHS.SIGNUP}>Create Free Account</Link>
+              <Link to={paths.auth['sign-up']}>Create Free Account</Link>
             </Button>
             <Button
               variant="outline"
@@ -242,7 +242,7 @@ export function HomePage() {
               asChild
               className="w-full sm:w-auto rounded-xl border-white/30 bg-white/10 hover:bg-white/20 text-white font-semibold px-7 backdrop-blur-sm"
             >
-              <Link to={PATHS.JOBS}>Browse Jobs</Link>
+              <Link to={paths.jobs}>Browse Jobs</Link>
             </Button>
           </div>
         </div>

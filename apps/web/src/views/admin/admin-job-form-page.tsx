@@ -21,11 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useListAdminCompaniesQuery } from '@/services/company';
 import { getApiErrorMessage } from '@/services/api';
-import {
-  useCreateAdminJobMutation,
-  useGetAdminJobQuery,
-  useUpdateAdminJobMutation
-} from '@/services/job';
+import { useCreateJobMutation, useGetJobDetailsQuery, useUpdateJobMutation } from '@/services/job';
 import type {
   EmploymentType,
   ExperienceLevel,
@@ -37,10 +33,9 @@ import type {
 import {
   formatEmploymentType,
   formatExperience,
-  formatJobStatus,
   formatWorkMode
 } from '@/utils/formatters';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 const EMPLOYMENT_TYPES: EmploymentType[] = [
   'FULL_TIME',
@@ -73,26 +68,6 @@ const CATEGORY_OPTIONS: Array<{
   { label: 'Sales', value: 'SALES' },
   { label: 'Operations', value: 'OPERATIONS' }
 ];
-
-const EMPLOYMENT_TYPE_OPTIONS = EMPLOYMENT_TYPES.map((value) => ({
-  label: formatEmploymentType(value),
-  value
-}));
-
-const WORK_MODE_OPTIONS = WORK_MODES.map((value) => ({
-  label: formatWorkMode(value),
-  value
-}));
-
-const EXPERIENCE_LEVEL_OPTIONS = EXPERIENCE_LEVELS.map((value) => ({
-  label: formatExperience(value),
-  value
-}));
-
-const JOB_STATUS_OPTIONS = JOB_STATUSES.map((value) => ({
-  label: formatJobStatus(value),
-  value
-}));
 
 const jobFormSchema = z
   .object({
@@ -138,7 +113,7 @@ const DEFAULT_VALUES: IJobFormData = {
   workMode: 'HYBRID'
 };
 
-export function AdminJobFormPage() {
+export const AdminJobFormPage = () => {
   const { id: jobId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(jobId);
@@ -157,13 +132,13 @@ export function AdminJobFormPage() {
     isError: isJobError,
     isLoading: isJobLoading,
     refetch: refetchJob
-  } = useGetAdminJobQuery(jobId ?? '', {
+  } = useGetJobDetailsQuery(jobId ?? '', {
     skip: !isEdit
   });
 
-  const [createAdminJob, { isLoading: isCreating }] = useCreateAdminJobMutation();
+  const [createJob, { isLoading: isCreating }] = useCreateJobMutation();
 
-  const [updateAdminJob, { isLoading: isUpdating }] = useUpdateAdminJobMutation();
+  const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation();
 
   const {
     control,
@@ -251,19 +226,19 @@ export function AdminJobFormPage() {
 
       try {
         if (isEdit && jobId) {
-          await updateAdminJob({
+          await updateJob({
             data: request,
             jobId
           }).unwrap();
 
           toast.success('Job listing updated successfully.');
         } else {
-          await createAdminJob(request).unwrap();
+          await createJob(request).unwrap();
 
           toast.success('Job listing created successfully.');
         }
 
-        navigate(PATHS.ADMIN.JOBS);
+        navigate(paths.admin.jobs);
       } catch (error) {
         toast.error(
           getApiErrorMessage(
@@ -273,7 +248,7 @@ export function AdminJobFormPage() {
         );
       }
     },
-    [createAdminJob, isEdit, jobId, navigate, updateAdminJob]
+    [createJob, isEdit, jobId, navigate, updateJob]
   );
 
   if (isCompaniesLoading || (isEdit && isJobLoading)) {
@@ -326,7 +301,7 @@ export function AdminJobFormPage() {
   return (
     <div className='space-y-5 p-4 md:p-6'>
       <Button asChild className='-ml-2' size='sm' variant='ghost'>
-        <Link to={PATHS.ADMIN.JOBS}>
+        <Link to={paths.admin.jobs}>
           <ArrowLeft className='mr-1.5 h-4 w-4' />
           Back to Jobs
         </Link>
@@ -610,4 +585,4 @@ export function AdminJobFormPage() {
       </form>
     </div>
   );
-}
+};

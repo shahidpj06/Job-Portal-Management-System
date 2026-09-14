@@ -93,6 +93,10 @@ export const jobIdParamsSchema = z.object({
   jobId: z.string().trim().min(1, "Job ID is required."),
 });
 
+const commaSeparatedValues = (value: string): string[] => {
+  return value.split(",").map((item) => item.trim());
+};
+
 export const listJobsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
@@ -101,7 +105,57 @@ export const listJobsQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
 });
 
+export const listPublicJobsQuerySchema = listJobsQuerySchema
+  .extend({
+    employmentType: z
+      .string()
+      .max(100)
+      .transform(commaSeparatedValues)
+      .pipe(z.array(z.enum(EmploymentType)).min(1).max(5))
+      .optional(),
+
+    experienceLevel: z
+      .string()
+      .max(100)
+      .transform(commaSeparatedValues)
+      .pipe(z.array(z.enum(ExperienceLevel)).min(1).max(5))
+      .optional(),
+
+    workMode: z.enum(WorkMode).optional(),
+    location: z.string().trim().min(1).max(100).optional(),
+    minSalary: z.coerce
+      .number()
+      .int()
+      .nonnegative()
+      .max(2_147_483_647)
+      .optional(),
+
+    currency: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z]{3}$/, "Provide a three-letter currency code.")
+      .transform((value) => value.toUpperCase())
+      .optional(),
+
+    datePosted: z.enum(["24h", "7d", "30d"]).optional(),
+    sort: z.enum(["newest", "highest_salary"]).default("newest"),
+  })
+  .strict()
+  .superRefine((query, context) => {
+    const requiresCurrency =
+      query.minSalary !== undefined || query.sort === "highest_salary";
+
+    if (requiresCurrency && !query.currency) {
+      context.addIssue({
+        code: "custom",
+        path: ["currency"],
+        message: "Select a currency when filtering or sorting by salary.",
+      });
+    }
+  });
+
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
 export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;
+export type ListPublicJobsQuery = z.infer<typeof listPublicJobsQuerySchema>;

@@ -1,16 +1,20 @@
 import type { Prisma, PrismaClient } from "../generated/prisma/client.js";
+import { JobStatus } from "../generated/prisma/client.js";
 
 import { prisma } from "../database/index.js";
 import type {
   CreateJobInput,
   ListJobsQuery,
+  ListPublicJobsQuery,
   UpdateJobInput,
 } from "../schemas/job.schema.js";
 import { ApiError } from "../tools/api-error.js";
-import {
+import type {
   IJobListResult,
   IJobPaginationMetadata,
+  IPublicJobListResult,
   JobData,
+  PublicJobData,
 } from "../types/job.js";
 
 const JOB_RELATIONS_INCLUDE = {
@@ -145,6 +149,122 @@ const jobWhereInputBuild = (query: ListJobsQuery): Prisma.JobWhereInput => {
   };
 };
 
+const PUBLIC_JOB_DATE_WINDOWS: Record<
+  NonNullable<ListPublicJobsQuery["datePosted"]>,
+  number
+> = {
+  "24h": 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+  "30d": 30 * 24 * 60 * 60 * 1000,
+};
+
+const publicJobDataFromRecord = (
+  jobRecord: JobWithRelations,
+): PublicJobData => {
+  const { createdById: _createdById, ...publicJob } =
+    jobDataFromRecord(jobRecord);
+
+  return publicJob;
+};
+
+const publicJobWhereInputBuild = (
+  query: ListPublicJobsQuery,
+): Prisma.JobWhereInput => {
+  const where: Prisma.JobWhereInput = {
+    status: JobStatus.PUBLISHED,
+    category: query.category,
+    workMode: query.workMode,
+    currency: query.currency,
+  };
+
+  if (query.employmentType?.length) {
+    where.employmentType = {
+      in: query.employmentType,
+    };
+  }
+
+  if (query.experienceLevel?.length) {
+    where.experienceLevel = {
+      in: query.experienceLevel,
+    };
+  }
+
+  if (query.location) {
+    where.location = {
+      contains: query.location,
+      mode: TEXT_SEARCH_MODE,
+    };
+  }
+
+  if (query.minSalary !== undefined) {
+    where.salaryMax = {
+      gte: query.minSalary,
+    };
+  }
+
+  if (query.datePosted) {
+    where.createdAt = {
+      gte: new Date(Date.now() - PUBLIC_JOB_DATE_WINDOWS[query.datePosted]),
+    };
+  }
+
+  if (query.search) {
+    where.OR = [
+      {
+        title: {
+          contains: query.search,
+          mode: TEXT_SEARCH_MODE,
+        },
+      },
+      {
+        company: {
+          name: {
+            contains: query.search,
+            mode: TEXT_SEARCH_MODE,
+          },
+        },
+      },
+      {
+        summary: {
+          contains: query.search,
+          mode: TEXT_SEARCH_MODE,
+        },
+      },
+      {
+        location: {
+          contains: query.search,
+          mode: TEXT_SEARCH_MODE,
+        },
+      },
+    ];
+  }
+
+  return where;
+};
+
+const publicJobOrderByBuild = (
+  sort: ListPublicJobsQuery["sort"],
+): Prisma.JobOrderByWithRelationInput[] => {
+  const newestOrder: Prisma.JobOrderByWithRelationInput[] = [
+    { createdAt: "desc" },
+    { id: "desc" },
+  ];
+
+  if (sort === "highest_salary") {
+    return [
+      {
+        salaryMax: {
+          sort: "desc",
+          nulls: "last",
+        },
+      },
+      ...newestOrder,
+    ];
+  }
+
+  return newestOrder;
+};
+
 export const JobDataService = {
   create: async (
     input: CreateJobInput,
@@ -195,6 +315,25 @@ export const JobDataService = {
     return jobDataFromRecord(jobRecord);
   },
 
+  getPublicById: async (
+    jobId: string,
+    database: PrismaClient = prisma,
+  ): Promise<PublicJobData> => {
+    const jobRecord = await database.job.findFirst({
+      where: {
+        id: jobId,
+        status: JobStatus.PUBLISHED,
+      },
+      include: JOB_RELATIONS_INCLUDE,
+    });
+
+    if (!jobRecord) {
+      throw jobNotFoundError();
+    }
+
+    return publicJobDataFromRecord(jobRecord);
+  },
+
   list: async (
     query: ListJobsQuery,
     database: PrismaClient = prisma,
@@ -219,6 +358,41 @@ export const JobDataService = {
 
     return {
       items: jobRecords.map(jobDataFromRecord),
+      pagination: jobPaginationMetadataBuild(
+        query.limit,
+        query.page,
+        totalItems,
+      ),
+    };
+  },
+
+  listPublic: async (
+    query: ListPublicJobsQuery,
+    database: PrismaClient = prisma,
+  ): Promise<IPublicJobListResult> => {
+    const where = publicJobWhereInputBuild(query);
+    const skip = (query.page - 1) * query.limit;
+
+    const [jobRecords, totalItems] = await database.$transaction(
+      [
+        database.job.findMany({
+          where,
+          include: JOB_RELATIONS_INCLUDE,
+          orderBy: publicJobOrderByBuild(query.sort),
+          skip,
+          take: query.limit,
+        }),
+        database.job.count({
+          where,
+        }),
+      ],
+      {
+        isolationLevel: "RepeatableRead",
+      },
+    );
+
+    return {
+      items: jobRecords.map(publicJobDataFromRecord),
       pagination: jobPaginationMetadataBuild(
         query.limit,
         query.page,

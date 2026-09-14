@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthSession } from '@/services/auth';
 import type { AuthUserRole } from '@/types';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 interface RouteGuardProps extends PropsWithChildren {
   allowedRoles?: AuthUserRole[];
@@ -13,7 +13,7 @@ interface RouteGuardProps extends PropsWithChildren {
 export const RouteGuard = ({
   allowedRoles,
   children,
-  fallbackPath = PATHS.JOBS
+  fallbackPath = paths.jobs
 }: RouteGuardProps) => {
   const { isAuthenticated, status, user } = useAuthSession();
   const location = useLocation();
@@ -27,7 +27,7 @@ export const RouteGuard = ({
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={PATHS.LOGIN} replace state={{ from: location.pathname }} />;
+    return <Navigate to={paths.auth.login} replace state={{ from: location.pathname }} />;
   }
 
   if (allowedRoles && (!user || !allowedRoles.includes(user.role))) {

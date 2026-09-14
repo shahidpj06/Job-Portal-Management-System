@@ -8,14 +8,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 import { APP_CONFIG } from "@/utils/global-config";
 import { useState } from "react";
 
 const ADMIN_NAV = [
-  { label: "Dashboard", href: PATHS.ADMIN.DASHBOARD, icon: LayoutDashboard },
-  { label: "Jobs", href: PATHS.ADMIN.JOBS, icon: Briefcase },
-  { label: "Profile", href: PATHS.ADMIN.PROFILE, icon: User },
+  { label: "Dashboard", href: paths.admin.dashboard, icon: LayoutDashboard },
+  { label: "Jobs", href: paths.admin.jobs, icon: Briefcase },
+  { label: "Profile", href: paths.admin.profile, icon: User },
 ];
 
 export function AdminSidebar() {
@@ -31,13 +31,13 @@ export function AdminSidebar() {
     >
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         {!collapsed && (
-          <Link to={PATHS.HOME} className="flex items-center gap-2 text-lg font-bold text-primary">
+          <Link to={paths.home} className="flex items-center gap-2 text-lg font-bold text-primary">
             <Briefcase className="h-5 w-5 shrink-0" />
             {APP_CONFIG.name}
           </Link>
         )}
         {collapsed && (
-          <Link to={PATHS.HOME} className="mx-auto">
+          <Link to={paths.home} className="mx-auto">
             <Briefcase className="h-5 w-5 text-primary" />
           </Link>
         )}

@@ -4,12 +4,12 @@ import { Briefcase, Menu, X, LogIn, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useAuthSession } from '@/services/auth';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 import { APP_CONFIG } from '@/utils/global-config';
 
 const NAV_LINKS = [
-  { label: 'Find Jobs', href: PATHS.JOBS },
-  { label: 'Categories', href: `${PATHS.JOBS}?view=categories` },
+  { label: 'Find Jobs', href: paths.jobs },
+  { label: 'Categories', href: `${paths.jobs}?view=categories` },
   { label: 'About', href: '#about' }
 ];
 
@@ -19,8 +19,8 @@ export const PublicHeader = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isNavActive = (href: string) => {
-    if (href === PATHS.JOBS) {
-      return location.pathname === PATHS.JOBS && !location.search.includes('categories');
+    if (href === paths.jobs) {
+      return location.pathname === paths.jobs && !location.search.includes('categories');
     }
     if (href.includes('categories')) {
       return location.search.includes('categories');
@@ -33,7 +33,7 @@ export const PublicHeader = () => {
       <div className='mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-8'>
         {/* Brand Logo */}
         <Link
-          to={PATHS.HOME}
+          to={paths.home}
           className='flex items-center gap-2.5 font-extrabold text-xl text-foreground tracking-tight hover:opacity-90 transition-opacity'
         >
           <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary'>
@@ -73,7 +73,7 @@ export const PublicHeader = () => {
                   asChild
                   className='rounded-xl text-muted-foreground hover:text-foreground'
                 >
-                  <Link to={PATHS.ADMIN.DASHBOARD}>
+                  <Link to={paths.admin.dashboard}>
                     <Shield className='mr-1.5 h-4 w-4 text-primary' />
                     Admin
                   </Link>
@@ -86,7 +86,7 @@ export const PublicHeader = () => {
                     asChild
                     className='rounded-xl text-muted-foreground hover:text-foreground'
                   >
-                    <Link to={PATHS.APPLICATIONS}>My Applications</Link>
+                    <Link to={paths.applications}>My Applications</Link>
                   </Button>
                   <Button
                     variant='ghost'
@@ -94,7 +94,7 @@ export const PublicHeader = () => {
                     asChild
                     className='rounded-xl text-muted-foreground hover:text-foreground'
                   >
-                    <Link to={PATHS.PROFILE}>Profile</Link>
+                    <Link to={paths.profile}>Profile</Link>
                   </Button>
                 </>
               )}
@@ -115,7 +115,7 @@ export const PublicHeader = () => {
                 asChild
                 className='rounded-xl text-muted-foreground hover:text-foreground font-medium'
               >
-                <Link to={PATHS.ADMIN.DASHBOARD}>
+                <Link to={paths.admin.dashboard}>
                   <Shield className='mr-1.5 h-4 w-4 text-primary' />
                   Admin
                 </Link>
@@ -126,7 +126,7 @@ export const PublicHeader = () => {
                 asChild
                 className='rounded-xl text-muted-foreground hover:text-foreground font-medium'
               >
-                <Link to={PATHS.LOGIN}>
+                <Link to={paths.auth.login}>
                   <LogIn className='mr-1.5 h-4 w-4' />
                   Sign In
                 </Link>
@@ -136,7 +136,7 @@ export const PublicHeader = () => {
                 asChild
                 className='rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm px-4'
               >
-                <Link to={PATHS.SIGNUP}>Get Started</Link>
+                <Link to={paths.auth['sign-up']}>Get Started</Link>
               </Button>
             </>
           )}
@@ -173,14 +173,14 @@ export const PublicHeader = () => {
                   {!isAdmin && (
                     <>
                       <Link
-                        to={PATHS.APPLICATIONS}
+                        to={paths.applications}
                         onClick={() => setMobileOpen(false)}
                         className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
                       >
                         My Applications
                       </Link>
                       <Link
-                        to={PATHS.PROFILE}
+                        to={paths.profile}
                         onClick={() => setMobileOpen(false)}
                         className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
                       >
@@ -190,7 +190,7 @@ export const PublicHeader = () => {
                   )}
                   {isAdmin && (
                     <Link
-                      to={PATHS.ADMIN.DASHBOARD}
+                      to={paths.admin.dashboard}
                       onClick={() => setMobileOpen(false)}
                       className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
                     >
@@ -212,14 +212,14 @@ export const PublicHeader = () => {
               ) : (
                 <div className='flex flex-col gap-2 pt-1'>
                   <Link
-                    to={PATHS.ADMIN.DASHBOARD}
+                    to={paths.admin.dashboard}
                     onClick={() => setMobileOpen(false)}
                     className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-muted-foreground'
                   >
                     Admin Portal
                   </Link>
                   <Button variant='outline' size='sm' asChild className='rounded-xl'>
-                    <Link to={PATHS.LOGIN} onClick={() => setMobileOpen(false)}>
+                    <Link to={paths.auth.login} onClick={() => setMobileOpen(false)}>
                       Sign In
                     </Link>
                   </Button>
@@ -228,7 +228,7 @@ export const PublicHeader = () => {
                     asChild
                     className='rounded-xl bg-primary text-primary-foreground font-semibold'
                   >
-                    <Link to={PATHS.SIGNUP} onClick={() => setMobileOpen(false)}>
+                    <Link to={paths.auth['sign-up']} onClick={() => setMobileOpen(false)}>
                       Get Started
                     </Link>
                   </Button>

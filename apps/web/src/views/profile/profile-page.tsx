@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 import { getInitials, formatDate } from '@/utils/formatters';
 import { mockCandidate } from '@/mocks';
 import { useAuthSession } from '@/services/auth';
@@ -56,7 +56,7 @@ export const ProfilePage = () => {
                 )}
               </div>
               <Button className='mt-4 w-full' size='sm' variant='outline' asChild>
-                <Link to={PATHS.PROFILE_RESUME}>
+                <Link to={paths['profile-resume']}>
                   <Edit className='mr-1.5 h-4 w-4' />
                   Edit Profile
                 </Link>
@@ -134,7 +134,7 @@ export const ProfilePage = () => {
                     appear here.
                   </p>
                   <Button variant='outline' size='sm' asChild>
-                    <Link to={PATHS.PROFILE_SECURITY}>Security Settings</Link>
+                    <Link to={paths['profile-security']}>Security Settings</Link>
                   </Button>
                 </CardContent>
               </Card>

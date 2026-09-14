@@ -4,14 +4,13 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/common';
-import { JobListPagination } from '@/components/jobs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useDebouncedValue } from '@/hooks';
 import { getApiErrorMessage } from '@/services/api';
-import { useDeleteAdminJobMutation, useListAdminJobsQuery } from '@/services/job';
+import { useDeleteJobMutation, useListJobsQuery } from '@/services/job';
 import type { IJobListQuery } from '@/types';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 import {
   AdminJobsFilters,
@@ -20,15 +19,16 @@ import {
   type AdminJobExperienceFilter
 } from './components/jobs-filters';
 import { AdminJobsTable } from './components/jobs-table';
+import { ResultsPagination } from '@/components/pagination/pagination';
 
 const JOBS_PER_PAGE = 10;
 
-export const AdminJobsView = () => {
+export const AdminJobsPage = () => {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [category, setCategory] = useState<AdminJobCategoryFilter>(ALL_JOB_FILTER_VALUE);
-  const [deleteAdminJob] = useDeleteAdminJobMutation();
+  const [deleteJob] = useDeleteJobMutation();
   const debouncedSearch = useDebouncedValue(searchInput.trim());
 
   const [experienceLevel, setExperienceLevel] =
@@ -52,7 +52,7 @@ export const AdminJobsView = () => {
     isFetching,
     isLoading,
     refetch
-  } = useListAdminJobsQuery(queryArguments);
+  } = useListJobsQuery(queryArguments);
 
   const jobs = jobsResponse?.data.items ?? [];
   const pagination = jobsResponse?.data.pagination;
@@ -85,7 +85,7 @@ export const AdminJobsView = () => {
       setDeletingJobId(jobId);
 
       try {
-        await deleteAdminJob(jobId).unwrap();
+        await deleteJob(jobId).unwrap();
 
         toast.success('Job listing deleted successfully.');
 
@@ -98,7 +98,7 @@ export const AdminJobsView = () => {
         setDeletingJobId(null);
       }
     },
-    [deleteAdminJob, jobs.length, page]
+    [deleteJob, jobs.length, page]
   );
 
   const hasActiveFilters =
@@ -113,7 +113,7 @@ export const AdminJobsView = () => {
         description={`${pagination?.totalItems ?? 0} jobs total`}
         actions={
           <Button asChild>
-            <Link to={PATHS.ADMIN.NEW_JOB}>
+            <Link to={paths.admin['new-job']}>
               <Plus aria-hidden='true' className='mr-1.5 h-4 w-4' />
               Post New Job
             </Link>
@@ -153,7 +153,7 @@ export const AdminJobsView = () => {
               action={
                 !hasActiveFilters ? (
                   <Button asChild>
-                    <Link to={PATHS.ADMIN.NEW_JOB}>Post New Job</Link>
+                    <Link to={paths.admin['new-job']}>Post New Job</Link>
                   </Button>
                 ) : undefined
               }
@@ -172,10 +172,14 @@ export const AdminJobsView = () => {
               <AdminJobsTable deletingJobId={deletingJobId} jobs={jobs} onDelete={handleDelete} />
 
               {pagination ? (
-                <JobListPagination
+                <ResultsPagination
                   page={pagination.page}
                   pageCount={pagination.totalPages}
+                  totalItems={pagination.totalItems}
+                  itemLabel='jobs'
+                  disabled={isFetching}
                   onPageChange={handlePageChange}
+                  className='mt-4'
                 />
               ) : null}
             </div>

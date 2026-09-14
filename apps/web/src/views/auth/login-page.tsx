@@ -9,7 +9,7 @@ import { Field, SimpleForm } from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 import { LOGIN_DEFAULT_VALUES, loginSchema, type LoginFormData } from './auth-form.schemas';
 
@@ -33,7 +33,7 @@ export const LoginPage = () => {
 
         toast.success('Welcome back.');
 
-        navigate(user.role === 'ADMIN' ? PATHS.ADMIN.DASHBOARD : PATHS.JOBS, { replace: true });
+        navigate(user.role === 'ADMIN' ? paths.admin.dashboard : paths.jobs, { replace: true });
       } catch (error) {
         toast.error(getApiErrorMessage(error, 'Unable to sign in.'));
       }
@@ -42,7 +42,7 @@ export const LoginPage = () => {
   );
 
   if (isAuthenticated) {
-    return <Navigate replace to={isAdmin ? PATHS.ADMIN.DASHBOARD : PATHS.JOBS} />;
+    return <Navigate replace to={isAdmin ? paths.admin.dashboard : paths.jobs} />;
   }
 
   const isSubmittingForm = isSubmitting || isLoading;
@@ -54,7 +54,7 @@ export const LoginPage = () => {
       footer={
         <>
           Don&apos;t have an account?{' '}
-          <Link className='font-medium text-primary hover:underline' to={PATHS.SIGNUP}>
+          <Link className='font-medium text-primary hover:underline' to={paths.auth['sign-up']}>
             Sign up free
           </Link>
         </>
@@ -77,7 +77,7 @@ export const LoginPage = () => {
           placeholder='••••••••'
           autoComplete='current-password'
           labelAction={
-            <Link className='text-xs text-primary hover:underline' to={PATHS.FORGOT_PASSWORD}>
+            <Link className='text-xs text-primary hover:underline' to={paths.auth['forgot-password']}>
               Forgot password?
             </Link>
           }

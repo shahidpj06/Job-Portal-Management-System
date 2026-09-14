@@ -12,15 +12,15 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthSession } from '@/services/auth';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 import { APP_CONFIG } from '@/utils/global-config';
 import { getInitials } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 
 const ADMIN_NAV = [
-  { label: 'Dashboard', href: PATHS.ADMIN.DASHBOARD, icon: LayoutDashboard },
-  { label: 'Jobs', href: PATHS.ADMIN.JOBS, icon: Briefcase },
-  { label: 'Profile', href: PATHS.ADMIN.PROFILE, icon: User }
+  { label: 'Dashboard', href: paths.admin.dashboard, icon: LayoutDashboard },
+  { label: 'Jobs', href: paths.admin.jobs, icon: Briefcase },
+  { label: 'Profile', href: paths.admin.profile, icon: User }
 ];
 
 export const AdminTopbar = () => {
@@ -92,10 +92,10 @@ export const AdminTopbar = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end' className='w-48'>
             <DropdownMenuItem asChild>
-              <Link to={PATHS.ADMIN.PROFILE}>My Profile</Link>
+              <Link to={paths.admin.profile}>My Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to={PATHS.HOME}>View Site</Link>
+              <Link to={paths.home}>View Site</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void logout()}>Sign Out</DropdownMenuItem>

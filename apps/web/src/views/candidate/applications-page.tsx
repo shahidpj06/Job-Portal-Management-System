@@ -6,7 +6,7 @@ import { ApplicationStatusBadge } from '@/components/jobs';
 import { EmptyState } from '@/components/common';
 import { mockApplications } from '@/mocks';
 import { formatDate } from '@/utils/formatters';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 export function ApplicationsPage() {
   const myApps = mockApplications;
@@ -26,7 +26,7 @@ export function ApplicationsPage() {
           description='Start applying to jobs and track your progress here.'
           action={
             <Button asChild>
-              <Link to={PATHS.JOBS}>Browse Jobs</Link>
+              <Link to={paths.jobs}>Browse Jobs</Link>
             </Button>
           }
         />
@@ -45,7 +45,7 @@ export function ApplicationsPage() {
                       </div>
                       <div>
                         <Link
-                          to={PATHS.JOB_DETAILS(job.id)}
+                          to={paths['job-details'](job.id)}
                           className='font-semibold hover:text-primary transition-colors'
                         >
                           {job.title}

@@ -1,32 +1,32 @@
 import { Link } from "react-router-dom";
 import { Briefcase } from "lucide-react";
 import { APP_CONFIG } from "@/utils/global-config";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 
 const FOOTER_LINKS = {
   "For Job Seekers": [
-    { label: "Browse Jobs", href: PATHS.JOBS },
-    { label: "Saved Jobs", href: PATHS.JOBS },
-    { label: "Job Alerts", href: PATHS.JOBS },
-    { label: "Career Resources", href: PATHS.HOME },
+    { label: "Browse Jobs", href: paths.jobs },
+    { label: "Saved Jobs", href: paths.jobs },
+    { label: "Job Alerts", href: paths.jobs },
+    { label: "Career Resources", href: paths.home },
   ],
   "For Employers": [
-    { label: "Post a Job", href: PATHS.ADMIN.NEW_JOB },
-    { label: "Browse Candidates", href: PATHS.ADMIN.JOBS },
-    { label: "Pricing", href: PATHS.HOME },
-    { label: "Employer Resources", href: PATHS.HOME },
+    { label: "Post a Job", href: paths.admin['new-job'] },
+    { label: "Browse Candidates", href: paths.admin.jobs },
+    { label: "Pricing", href: paths.home },
+    { label: "Employer Resources", href: paths.home },
   ],
   "Company": [
-    { label: "About Us", href: PATHS.HOME },
-    { label: "Blog", href: PATHS.HOME },
-    { label: "Contact", href: PATHS.HOME },
-    { label: "Privacy Policy", href: PATHS.HOME },
+    { label: "About Us", href: paths.home },
+    { label: "Blog", href: paths.home },
+    { label: "Contact", href: paths.home },
+    { label: "Privacy Policy", href: paths.home },
   ],
   "Support": [
-    { label: "Help Center", href: PATHS.HOME },
-    { label: "Terms of Service", href: PATHS.HOME },
-    { label: "Cookie Policy", href: PATHS.HOME },
-    { label: "Accessibility", href: PATHS.HOME },
+    { label: "Help Center", href: paths.home },
+    { label: "Terms of Service", href: paths.home },
+    { label: "Cookie Policy", href: paths.home },
+    { label: "Accessibility", href: paths.home },
   ],
 };
 
@@ -37,7 +37,7 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="lg:col-span-1 space-y-3">
-            <Link to={PATHS.HOME} className="flex items-center gap-2.5 text-lg font-bold text-white tracking-tight">
+            <Link to={paths.home} className="flex items-center gap-2.5 text-lg font-bold text-white tracking-tight">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary">
                 <Briefcase className="h-4 w-4 text-indigo-400" />
               </div>

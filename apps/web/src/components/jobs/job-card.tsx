@@ -7,7 +7,7 @@ import {
   formatEmploymentType,
   formatWorkMode,
 } from "@/utils/formatters";
-import { PATHS } from "@/utils/paths";
+import { paths } from "@/utils/paths";
 
 interface JobCardProps {
   job: Job;
@@ -50,7 +50,7 @@ export function JobCard({ job, compact = false, className = "" }: JobCardProps) 
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 space-y-0.5">
                 <Link
-                  to={PATHS.JOB_DETAILS(job.id)}
+                  to={paths['job-details'](job.id)}
                   className="block truncate text-base font-bold tracking-tight text-foreground transition-colors hover:text-primary sm:text-[17px]"
                 >
                   {job.title}

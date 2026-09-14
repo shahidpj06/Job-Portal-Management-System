@@ -10,7 +10,7 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import type { JobCategory } from '@/types';
-import { PATHS } from '@/utils/paths';
+import { paths } from '@/utils/paths';
 
 interface CategoryCardProps {
   category: JobCategory;
@@ -32,7 +32,7 @@ export function CategoryCard({ category, className = '' }: CategoryCardProps) {
 
   return (
     <Link
-      to={`${PATHS.JOBS}?categoryId=${category.id}`}
+      to={`${paths.jobs}?categoryId=${category.id}`}
       className={`group relative flex flex-col items-center text-center rounded-2xl border border-border/80 bg-surface p-5 md:p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_8px_20px_-4px_rgba(79,70,229,0.12)] ${className}`}
     >
       {/* Icon Pill */}

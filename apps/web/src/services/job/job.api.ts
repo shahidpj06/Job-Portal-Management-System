@@ -5,6 +5,7 @@ import type {
   IJobListQuery,
   IJobListResult,
   IJobMutationResult,
+  IPublicJobListQuery,
   IUpdateJobMutationArguments
 } from '@/types';
 import { routes } from '@/utils/routes';
@@ -16,7 +17,7 @@ const JOB_LIST_TAG = {
 
 export const jobApi = apiService.injectEndpoints({
   endpoints: (builder) => ({
-    createAdminJob: builder.mutation<ApiSuccessResponse<IJobMutationResult>, ICreateJobRequest>({
+    createJob: builder.mutation<ApiSuccessResponse<IJobMutationResult>, ICreateJobRequest>({
       query: (body) => ({
         body,
         method: 'POST',
@@ -25,7 +26,7 @@ export const jobApi = apiService.injectEndpoints({
       invalidatesTags: [JOB_LIST_TAG]
     }),
 
-    deleteAdminJob: builder.mutation<ApiSuccessResponse<null>, string>({
+    deleteJob: builder.mutation<ApiSuccessResponse<null>, string>({
       query: (jobId) => ({
         method: 'DELETE',
         url: routes.admin.jobs.byId(jobId)
@@ -39,7 +40,7 @@ export const jobApi = apiService.injectEndpoints({
       ]
     }),
 
-    getAdminJob: builder.query<ApiSuccessResponse<IJobMutationResult>, string>({
+    getJobDetails: builder.query<ApiSuccessResponse<IJobMutationResult>, string>({
       query: (jobId) => ({
         method: 'GET',
         url: routes.admin.jobs.byId(jobId)
@@ -52,7 +53,7 @@ export const jobApi = apiService.injectEndpoints({
       ]
     }),
 
-    listAdminJobs: builder.query<ApiSuccessResponse<IJobListResult>, IJobListQuery>({
+    listJobs: builder.query<ApiSuccessResponse<IJobListResult>, IJobListQuery>({
       query: (params) => ({
         method: 'GET',
         params,
@@ -69,7 +70,41 @@ export const jobApi = apiService.injectEndpoints({
       }
     }),
 
-    updateAdminJob: builder.mutation<
+    listPublicJobs: builder.query<ApiSuccessResponse<IJobListResult>, IPublicJobListQuery>({
+      query: ({ employmentType, experienceLevel, ...params }) => ({
+        method: 'GET',
+        url: routes.jobs.root,
+        params: {
+          ...params,
+          employmentType: employmentType?.length ? employmentType.join(',') : undefined,
+          experienceLevel: experienceLevel?.length ? experienceLevel.join(',') : undefined
+        }
+      }),
+      providesTags: (result) => {
+        const jobTags =
+          result?.data.items.map((job) => ({
+            id: job.id,
+            type: 'Job' as const
+          })) ?? [];
+
+        return [JOB_LIST_TAG, ...jobTags];
+      }
+    }),
+
+    getPublicJobDetails: builder.query<ApiSuccessResponse<IJobMutationResult>, string>({
+      query: (jobId) => ({
+        method: 'GET',
+        url: routes.jobs.byId(jobId)
+      }),
+      providesTags: (_result, _error, jobId) => [
+        {
+          id: jobId,
+          type: 'Job'
+        }
+      ]
+    }),
+
+    updateJob: builder.mutation<
       ApiSuccessResponse<IJobMutationResult>,
       IUpdateJobMutationArguments
     >({
@@ -90,9 +125,11 @@ export const jobApi = apiService.injectEndpoints({
 });
 
 export const {
-  useCreateAdminJobMutation,
-  useDeleteAdminJobMutation,
-  useGetAdminJobQuery,
-  useListAdminJobsQuery,
-  useUpdateAdminJobMutation
+  useCreateJobMutation,
+  useDeleteJobMutation,
+  useGetJobDetailsQuery,
+  useGetPublicJobDetailsQuery,
+  useListJobsQuery,
+  useListPublicJobsQuery,
+  useUpdateJobMutation
 } = jobApi;
