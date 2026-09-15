@@ -1,7 +1,8 @@
-import { AdminDashboardPage } from '@/views/admin/admin-dashboard-page';
+import { AdminDashboardPage } from '@/views/admin/dashboard/dashboard-page';
 import { AdminJobFormPage } from '@/views/admin/admin-job-form-page';
 import { AdminJobsPage } from '@/views/admin/jobs/jobs';
 import { AdminLayout } from './layouts/admin-layout';
+import { AdminApplicationsPage } from '@/views/admin/applications/applications-page';
 import { AdminProfilePage } from '@/views/admin/admin-profile-page';
 import { ApplicationsPage } from '@/views/candidate/applications-page';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
@@ -98,6 +99,10 @@ export const router = createBrowserRouter([
       {
         path: 'jobs',
         element: <AdminJobsPage />
+      },
+      {
+        path: 'applications',
+        element: <AdminApplicationsPage />
       },
       {
         path: 'jobs/new',

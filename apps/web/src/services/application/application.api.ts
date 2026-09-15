@@ -1,6 +1,11 @@
 import { apiService } from '@/services/api';
 import type {
   ApiSuccessResponse,
+  IAdminApplicationListArguments,
+  IApplicationDetails,
+  IApplicationDetailsArguments,
+  IApplicationListArguments,
+  IApplicationListResult,
   IApplicationSubmissionResult,
   ISubmitApplicationRequest
 } from '@/types';
@@ -46,8 +51,52 @@ export const applicationApi = apiService.injectEndpoints({
               }
             ]
           : []
+    }),
+    listCandidateApplications: builder.query<
+      ApiSuccessResponse<IApplicationListResult>,
+      IApplicationListArguments
+    >({
+      query: ({ page, limit }) => ({
+        url: routes.applications.root,
+        method: 'GET',
+        params: { page, limit }
+      }),
+      providesTags: [{ type: 'Application', id: 'LIST' }],
+      keepUnusedDataFor: 0
+    }),
+    listAdminApplications: builder.query<
+      ApiSuccessResponse<IApplicationListResult>,
+      IAdminApplicationListArguments
+    >({
+      query: ({ page, limit, jobId }) => ({
+        url: routes.admin.applications.root,
+        method: 'GET',
+        params: { page, limit, jobId }
+      }),
+      providesTags: [{ type: 'Application', id: 'LIST' }],
+      keepUnusedDataFor: 0
+    }),
+
+    getAdminApplicationDetails: builder.query<
+      ApiSuccessResponse<{ application: IApplicationDetails }>,
+      IApplicationDetailsArguments
+    >({
+      query: ({ applicationId }) => ({
+        url: routes.admin.applications.byId(applicationId),
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, { applicationId }) => [
+        { type: 'Application', id: applicationId }
+      ],
+      keepUnusedDataFor: 0
     })
   })
 });
 
-export const { useSubmitApplicationMutation } = applicationApi;
+export const {
+  useSubmitApplicationMutation,
+  useListCandidateApplicationsQuery,
+  useListAdminApplicationsQuery,
+  useGetAdminApplicationDetailsQuery,
+  useLazyGetAdminApplicationDetailsQuery
+} = applicationApi;
