@@ -1,4 +1,4 @@
-import { AdminDashboardPage } from '@/views/admin/admin-dashboard-page';
+import { AdminDashboardPage } from '@/views/admin/dashboard/dashboard-page';
 import { AdminJobFormPage } from '@/views/admin/admin-job-form-page';
 import { AdminJobsPage } from '@/views/admin/jobs/jobs';
 import { AdminLayout } from './layouts/admin-layout';
