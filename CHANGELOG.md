@@ -20,6 +20,8 @@ The Job Portal App Changes
   [FEATURE] App: Integrate Admin Jobs UI with RTK Query
 - [JBM-15](https://shahidpj06.atlassian.net/browse/JBM-15)
   [FEATURE] App: Public job discovery and details
+- [JBM-16](https://shahidpj06.atlassian.net/browse/JBM-16)
+  [FEATURE] App: Candidate profile and resume management
 
 ### Changes
 

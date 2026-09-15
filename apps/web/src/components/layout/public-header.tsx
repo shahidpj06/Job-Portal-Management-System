@@ -1,11 +1,24 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { Briefcase, Menu, X, LogIn, Shield } from 'lucide-react';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import { Briefcase, LogIn, Menu, Shield } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthSession } from '@/services/auth';
-import { paths } from '@/utils/paths';
+import { useGetProfileFileAccessQuery, useGetProfileQuery } from '@/services/profile/profile.api';
 import { APP_CONFIG } from '@/utils/global-config';
+import { paths } from '@/utils/paths';
+
+import { AccountMenu } from './account-menu';
 
 const NAV_LINKS = [
   { label: 'Find Jobs', href: paths.jobs },
@@ -14,229 +27,172 @@ const NAV_LINKS = [
 ];
 
 export const PublicHeader = () => {
-  const { isAuthenticated, isAdmin, user, logout } = useAuthSession();
+  const { isAuthenticated, user, logout, status, isLoading: isSigningOut } = useAuthSession();
+
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isNavActive = (href: string) => {
-    if (href === paths.jobs) {
-      return location.pathname === paths.jobs && !location.search.includes('categories');
+  const userId = isAuthenticated ? user?.id : undefined;
+
+  const { currentData: profileResponse } = useGetProfileQuery(userId ?? skipToken);
+
+  const hasAvatar = useMemo(
+    () =>
+      profileResponse?.data.profile.profileFiles.some((file) => file.kind === 'AVATAR') ?? false,
+    [profileResponse]
+  );
+
+  const { currentData: avatarResponse } = useGetProfileFileAccessQuery(
+    userId && hasAvatar ? { userId, kind: 'avatar' } : skipToken,
+    {
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 4 * 60 * 1000
     }
-    if (href.includes('categories')) {
-      return location.search.includes('categories');
+  );
+
+  const navigationLinks = useMemo(() => {
+    const isCategoriesView =
+      location.pathname === paths.jobs &&
+      new URLSearchParams(location.search).get('view') === 'categories';
+
+    return NAV_LINKS.map((link) => ({
+      ...link,
+      active:
+        link.href === paths.jobs
+          ? location.pathname === paths.jobs && !isCategoriesView
+          : link.href.includes('view=categories')
+            ? isCategoriesView
+            : location.hash === link.href
+    }));
+  }, [location.pathname, location.search, location.hash]);
+
+  const onMobileOpenChange = useCallback((open: boolean) => {
+    setMobileOpen(open);
+  }, []);
+
+  const onCloseMobileMenu = useCallback(() => {
+    setMobileOpen(false);
+  }, []);
+
+  const onLogout = useCallback(async () => {
+    if (isSigningOut) {
+      return;
     }
-    return location.pathname === href;
-  };
+
+    try {
+      await logout();
+    } catch {
+      toast.error('Server sign-out failed. Your local session was cleared.');
+    } finally {
+      navigate(paths.home, { replace: true });
+    }
+  }, [isSigningOut, logout, navigate]);
 
   return (
-    <header className='sticky top-0 z-50 w-full border-b border-border/80 bg-surface/90 backdrop-blur-md transition-all'>
-      <div className='mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-8'>
-        {/* Brand Logo */}
-        <Link
-          to={paths.home}
-          className='flex items-center gap-2.5 font-extrabold text-xl text-foreground tracking-tight hover:opacity-90 transition-opacity'
-        >
-          <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary'>
-            <Briefcase className='h-5 w-5' />
-          </div>
-          <span>{APP_CONFIG.name}</span>
-        </Link>
-
-        {/* Center Desktop Navigation Pill */}
-        <nav className='hidden items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 md:flex'>
-          {NAV_LINKS.map((link) => {
-            const active = isNavActive(link.href);
-            return (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-                  active
-                    ? 'bg-surface text-foreground font-semibold shadow-2xs'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-surface/50'
-                }`}
+    <header className='sticky top-0 z-50 w-full border-b border-border/80 bg-surface/90 backdrop-blur-md'>
+      <div className='mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 md:px-8'>
+        <div className='flex min-w-0 items-center gap-2'>
+          {/* Mobile navigation: trigger before the logo, drawer on the left. */}
+          <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+            <SheetTrigger asChild>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                aria-label='Open navigation menu'
+                className='shrink-0 rounded-xl md:hidden'
               >
-                {link.label}
-              </Link>
-            );
-          })}
+                <Menu aria-hidden='true' className='size-5' />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side='left' className='w-72 max-w-[85vw] overflow-y-auto p-6'>
+              <SheetTitle className='mb-2 flex items-center gap-2 text-lg font-bold'>
+                <span className='flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+                  <Briefcase aria-hidden='true' className='size-4' />
+                </span>
+                {APP_CONFIG.name}
+              </SheetTitle>
+
+              <SheetDescription className='sr-only'>Main website navigation</SheetDescription>
+
+              <nav aria-label='Mobile navigation' className='mt-6 grid gap-2'>
+                {navigationLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    onClick={onCloseMobileMenu}
+                    aria-current={link.active ? 'page' : undefined}
+                    className={`rounded-xl px-3.5 py-3 text-sm font-medium transition-colors ${
+                      link.active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+
+          <Link
+            to={paths.home}
+            className='flex min-w-0 items-center gap-2 text-xl font-extrabold tracking-tight text-foreground transition-opacity hover:opacity-90'
+          >
+            <span className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+              <Briefcase aria-hidden='true' className='size-5' />
+            </span>
+            <span className='truncate'>{APP_CONFIG.name}</span>
+          </Link>
+        </div>
+
+        {/* Existing desktop navigation pill. */}
+        <nav
+          aria-label='Main navigation'
+          className='hidden items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 md:flex'
+        >
+          {navigationLinks.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              aria-current={link.active ? 'page' : undefined}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                link.active
+                  ? 'bg-surface font-semibold text-foreground shadow-2xs'
+                  : 'text-muted-foreground hover:bg-surface/50 hover:text-foreground'
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Desktop Actions */}
-        <div className='hidden items-center gap-2.5 md:flex'>
-          {isAuthenticated ? (
-            <>
-              {isAdmin ? (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  asChild
-                  className='rounded-xl text-muted-foreground hover:text-foreground'
-                >
-                  <Link to={paths.admin.dashboard}>
-                    <Shield className='mr-1.5 h-4 w-4 text-primary' />
-                    Admin
-                  </Link>
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    asChild
-                    className='rounded-xl text-muted-foreground hover:text-foreground'
-                  >
-                    <Link to={paths.applications}>My Applications</Link>
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    asChild
-                    className='rounded-xl text-muted-foreground hover:text-foreground'
-                  >
-                    <Link to={paths.profile}>Profile</Link>
-                  </Button>
-                </>
-              )}
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => void logout()}
-                className='rounded-xl border-border hover:bg-muted font-medium'
-              >
-                Sign Out
-              </Button>
-            </>
+        <div className='flex shrink-0 items-center gap-2'>
+          {status === 'checking' ? (
+            <Skeleton className='size-10 rounded-full' />
+          ) : isAuthenticated && user ? (
+            <AccountMenu
+              key={user.id}
+              user={user}
+              avatarUrl={avatarResponse?.data.file.url}
+              isSigningOut={isSigningOut}
+              onLogout={onLogout}
+            />
           ) : (
             <>
-              <Button
-                variant='ghost'
-                size='sm'
-                asChild
-                className='rounded-xl text-muted-foreground hover:text-foreground font-medium'
-              >
-                <Link to={paths.admin.dashboard}>
-                  <Shield className='mr-1.5 h-4 w-4 text-primary' />
-                  Admin
-                </Link>
-              </Button>
-              <Button
-                variant='ghost'
-                size='sm'
-                asChild
-                className='rounded-xl text-muted-foreground hover:text-foreground font-medium'
-              >
+              <Button variant='ghost' size='sm' asChild className='rounded-xl'>
                 <Link to={paths.auth.login}>
-                  <LogIn className='mr-1.5 h-4 w-4' />
+                  <LogIn aria-hidden='true' className='hidden size-4 sm:block' />
                   Sign In
                 </Link>
               </Button>
-              <Button
-                size='sm'
-                asChild
-                className='rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm px-4'
-              >
+
+              <Button size='sm' asChild className='hidden rounded-xl font-semibold lg:inline-flex'>
                 <Link to={paths.auth['sign-up']}>Get Started</Link>
               </Button>
             </>
           )}
         </div>
-
-        {/* Mobile Hamburger Menu */}
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild className='md:hidden'>
-            <Button variant='ghost' size='icon' aria-label='Open menu' className='rounded-xl'>
-              {mobileOpen ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side='right' className='w-72 p-6'>
-            <SheetTitle className='flex items-center gap-2 text-lg font-bold text-foreground mb-6'>
-              <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary'>
-                <Briefcase className='h-4 w-4' />
-              </div>
-              {APP_CONFIG.name}
-            </SheetTitle>
-            <nav className='flex flex-col gap-1.5'>
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className='rounded-xl px-3.5 py-2.5 text-sm font-medium hover:bg-muted text-foreground transition-colors'
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <hr className='my-3 border-border' />
-              {isAuthenticated ? (
-                <>
-                  {!isAdmin && (
-                    <>
-                      <Link
-                        to={paths.applications}
-                        onClick={() => setMobileOpen(false)}
-                        className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
-                      >
-                        My Applications
-                      </Link>
-                      <Link
-                        to={paths.profile}
-                        onClick={() => setMobileOpen(false)}
-                        className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
-                      >
-                        Profile
-                      </Link>
-                    </>
-                  )}
-                  {isAdmin && (
-                    <Link
-                      to={paths.admin.dashboard}
-                      onClick={() => setMobileOpen(false)}
-                      className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-foreground'
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      void logout();
-                      setMobileOpen(false);
-                    }}
-                    className='mt-3 rounded-xl'
-                  >
-                    Sign Out ({user?.firstName})
-                  </Button>
-                </>
-              ) : (
-                <div className='flex flex-col gap-2 pt-1'>
-                  <Link
-                    to={paths.admin.dashboard}
-                    onClick={() => setMobileOpen(false)}
-                    className='rounded-xl px-3.5 py-2 text-sm font-medium hover:bg-muted text-muted-foreground'
-                  >
-                    Admin Portal
-                  </Link>
-                  <Button variant='outline' size='sm' asChild className='rounded-xl'>
-                    <Link to={paths.auth.login} onClick={() => setMobileOpen(false)}>
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button
-                    size='sm'
-                    asChild
-                    className='rounded-xl bg-primary text-primary-foreground font-semibold'
-                  >
-                    <Link to={paths.auth['sign-up']} onClick={() => setMobileOpen(false)}>
-                      Get Started
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </nav>
-          </SheetContent>
-        </Sheet>
       </div>
     </header>
   );

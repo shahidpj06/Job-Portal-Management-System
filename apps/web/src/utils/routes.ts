@@ -18,5 +18,10 @@ export const routes = {
   jobs: {
     root: 'jobs',
     byId: (jobId: string) => `jobs/${encodeURIComponent(jobId)}`
+  },
+  profile: {
+    root: 'profile',
+    avatar: 'profile/avatar',
+    resume: 'profile/resume'
   }
 } as const;

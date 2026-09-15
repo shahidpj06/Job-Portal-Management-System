@@ -184,8 +184,7 @@ export const JobCard = (props: JobCardProps) => {
               onClick={onApply}
               className='h-11 flex-1 rounded-lg px-5 font-semibold md:h-8 md:flex-none md:px-4 md:text-xs'
             >
-              Apply Now
-              <Zap aria-hidden='true' className='size-4 md:hidden' />
+              View More
             </Button>
           </div>
         </CardContent>

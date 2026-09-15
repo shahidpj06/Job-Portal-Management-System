@@ -13,6 +13,10 @@ const environmentSchema = z.object({
     .min(64, "JWT_ACCESS_SECRET must be at least 64 characters."),
   JWT_ACCESS_TOKEN_TTL: z.string().min(1).default("15m"),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SECRET_KEY: z.string().min(1),
+  SUPABASE_RESUMES_BUCKET: z.string().min(1),
+  SUPABASE_AVATARS_BUCKET: z.string().min(1),
 });
 
 export const env = environmentSchema.parse(process.env);

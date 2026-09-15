@@ -58,11 +58,35 @@ enum ApplicationStatus {
   HIRED
 }
 
+enum ProfileFileKind {
+  AVATAR
+  RESUME
+}
+
+model ProfileFile {
+  id          String          @id @default(cuid())
+  userId      String          @map("user_id")
+  kind        ProfileFileKind
+  path        String          @unique
+  filename    String
+  contentType String          @map("content_type")
+  size        Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, kind])
+  @@map("profile_files")
+}
+
 model User {
   id           String   @id @default(cuid())
   firstName    String   @map("first_name")
   lastName     String   @map("last_name")
   email        String   @unique
+  profileFiles ProfileFile[]
   passwordHash String   @map("password_hash")
   role         UserRole @default(USER)
 
