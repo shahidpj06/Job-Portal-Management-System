@@ -13,6 +13,7 @@ export const paths = {
   'profile-security': '/profile/security',
   applications: '/applications',
   admin: {
+    applications: '/admin/applications',
     dashboard: '/admin/dashboard',
     jobs: '/admin/jobs',
     'new-job': '/admin/jobs/new',

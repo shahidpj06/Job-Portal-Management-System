@@ -5,8 +5,9 @@ import type { IJobData } from '@/types';
 import { formatEmploymentType, formatRelativeDate } from '@/utils/formatters';
 import { AdminJobStatusBadge } from './job-status-badge';
 import { AdminJobActions } from './job-actions';
-
-
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { paths } from '@/utils/paths';
 
 interface IAdminJobTableRowProps {
   isDeleting: boolean;
@@ -18,7 +19,6 @@ const AdminJobTableRowComponent = ({ isDeleting, job, onDelete }: IAdminJobTable
   return (
     <TableRow>
       <TableCell className='font-medium'>{job.title}</TableCell>
-
       <TableCell className='text-muted-foreground'>{job.company.name}</TableCell>
 
       <TableCell className='text-muted-foreground'>
@@ -29,7 +29,16 @@ const AdminJobTableRowComponent = ({ isDeleting, job, onDelete }: IAdminJobTable
         <AdminJobStatusBadge status={job.status} />
       </TableCell>
 
-      <TableCell className='text-muted-foreground'>{job.applicationCount}</TableCell>
+      <TableCell>
+        <Button asChild variant='link' className='h-auto p-0'>
+          <Link
+            to={`${paths.admin.applications}?jobId=${encodeURIComponent(job.id)}`}
+            aria-label={`View applications for ${job.title}`}
+          >
+            {job.applicationCount}
+          </Link>
+        </Button>
+      </TableCell>
 
       <TableCell className='text-muted-foreground'>{formatRelativeDate(job.createdAt)}</TableCell>
 

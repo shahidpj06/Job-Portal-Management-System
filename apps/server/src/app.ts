@@ -6,6 +6,7 @@ import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import { notFoundHandler } from "./middlewares/not-found.middleware.js";
 import { sendSuccess } from "./tools/api-response.js";
 import {
+  adminApplicationsRouter,
   adminCompaniesRouter,
   adminJobsRouter,
   applicationsRouter,
@@ -42,6 +43,7 @@ app.use(`${baseRoute}/profile`, profileRouter);
 app.use(`${baseRoute}/admin/companies`, adminCompaniesRouter);
 app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
 app.use(`${baseRoute}/applications`, applicationsRouter);
+app.use(`${baseRoute}/admin/applications`, adminApplicationsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

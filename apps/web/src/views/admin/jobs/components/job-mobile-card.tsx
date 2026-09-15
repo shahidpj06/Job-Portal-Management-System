@@ -2,17 +2,18 @@ import { memo } from 'react';
 
 import type { IJobData } from '@/types';
 import { formatRelativeDate } from '@/utils/formatters';
-import { AdminJobActions } from './job-actions';
 import { AdminJobStatusBadge } from './job-status-badge';
-
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { paths } from '@/utils/paths';
 
 interface IAdminJobMobileCardProps {
-  isDeleting: boolean;
+  isDeleting?: boolean;
   job: IJobData;
-  onDelete: (jobId: string) => Promise<void>;
+  onDelete?: (jobId: string) => Promise<void>;
 }
 
-const AdminJobMobileCardComponent = ({ isDeleting, job, onDelete }: IAdminJobMobileCardProps) => {
+const AdminJobMobileCardComponent = ({ job }: IAdminJobMobileCardProps) => {
   return (
     <article className='rounded-lg border border-border p-4'>
       <div className='flex items-start justify-between gap-2'>
@@ -25,14 +26,20 @@ const AdminJobMobileCardComponent = ({ isDeleting, job, onDelete }: IAdminJobMob
         <AdminJobStatusBadge status={job.status} />
       </div>
 
-      <div className='mt-3 flex items-center justify-between gap-2'>
-        <span className='text-xs text-muted-foreground'>
-          {job.applicationCount} {job.applicationCount === 1 ? 'applicant' : 'applicants'}
+      <div className='text-xs text-muted-foreground'>
+        <Button asChild variant='link' className='h-auto p-0 text-xs'>
+          <Link
+            to={`${paths.admin.applications}?jobId=${encodeURIComponent(job.id)}`}
+            aria-label={`View applications for ${job.title}`}
+          >
+            {job.applicationCount} {job.applicationCount === 1 ? 'applicant' : 'applicants'}
+          </Link>
+        </Button>
+
+        <span>
           {' · '}
           {formatRelativeDate(job.createdAt)}
         </span>
-
-        <AdminJobActions isDeleting={isDeleting} job={job} onDelete={onDelete} />
       </div>
     </article>
   );

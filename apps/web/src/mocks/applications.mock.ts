@@ -7,7 +7,7 @@ export const mockApplications: Application[] = [
     id: "app_1",
     jobId: mockJobs[0].id,
     userId: mockCandidate.id,
-    status: "APPLIED",
+    status: "SUBMITTED",
     appliedAt: new Date(Date.now() - 86400000).toISOString(),
     updatedAt: new Date(Date.now() - 86400000).toISOString(),
     job: mockJobs[0],

@@ -24,6 +24,8 @@ The Job Portal App Changes
   [FEATURE] App: Candidate profile and resume management
 - [JBM-17](https://shahidpj06.atlassian.net/browse/JBM-17)
   [FEATURE] App: Job application submission
+- [JBM-18](https://shahidpj06.atlassian.net/browse/JBM-18)
+  [FEATURE] App: Candidate and admin application lists
 
 ### Changes
 

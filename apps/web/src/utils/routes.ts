@@ -4,8 +4,12 @@ export const routes = {
       root: 'admin/companies'
     },
     jobs: {
-      byId: (jobId: string) => `admin/jobs/${jobId}`,
-      root: 'admin/jobs'
+      root: 'admin/jobs',
+      byId: (jobId: string) => `admin/jobs/${jobId}`
+    },
+    applications: {
+      root: 'admin/applications',
+      byId: (applicationId: string) => `admin/applications/${encodeURIComponent(applicationId)}`
     }
   },
   auth: {

@@ -6,9 +6,17 @@ import { authenticate } from "../middlewares/authenticate.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
 import {
   getValidatedBody,
+  getValidatedParams,
+  getValidatedQuery,
   validateBody,
+  validateParams,
+  validateQuery,
 } from "../middlewares/validate-request.middleware.js";
 import {
+  ApplicationIdParams,
+  applicationIdParamsSchema,
+  ListCandidateApplicationsQuery,
+  listCandidateApplicationsQuerySchema,
   submitApplicationSchema,
   type SubmitApplicationInput,
 } from "../schemas/application.schema.js";
@@ -16,6 +24,8 @@ import { ApplicationDataService } from "../services/application.data-service.js"
 import { ApiError } from "../tools/api-error.js";
 import { sendSuccess } from "../tools/api-response.js";
 import { asyncHandler } from "../tools/async-handler.helper.js";
+import { ApplicationReadDataService } from "../services/application-read.data-service.js";
+import { getAuthenticatedUser } from "../tools/authenticated-user.helper.js";
 
 export const applicationsRouter = Router();
 
@@ -53,6 +63,43 @@ applicationsRouter.post(
       statusCode: 201,
       message: "Your application has been submitted.",
       data: { application },
+    });
+  }),
+);
+
+applicationsRouter.get(
+  "/",
+  validateQuery(listCandidateApplicationsQuerySchema),
+  asyncHandler(async (request, response) => {
+    const user = getAuthenticatedUser(request);
+    const query = getValidatedQuery<ListCandidateApplicationsQuery>(request);
+
+    const result = await ApplicationReadDataService.listCandidateApplications(
+      user.id,
+      query,
+    );
+
+    return sendSuccess(response, {
+      data: result,
+      message: "Your applications retrieved successfully.",
+    });
+  }),
+);
+
+applicationsRouter.get(
+  "/:applicationId",
+  validateParams(applicationIdParamsSchema),
+  asyncHandler(async (request, response) => {
+    const { applicationId } = getValidatedParams<ApplicationIdParams>(request);
+
+    const application = await ApplicationReadDataService.getApplicationDetails(
+      applicationId,
+      getAuthenticatedUser(request),
+    );
+
+    return sendSuccess(response, {
+      data: { application },
+      message: "Application retrieved successfully.",
     });
   }),
 );

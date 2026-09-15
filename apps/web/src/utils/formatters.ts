@@ -78,7 +78,7 @@ const EXPERIENCE_LABELS: Record<ExperienceLevel, string> = {
 };
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  APPLIED: 'Applied',
+  SUBMITTED: 'Applied',
   REVIEWING: 'In Review',
   INTERVIEWING: 'Interview',
   OFFER: 'Offer',

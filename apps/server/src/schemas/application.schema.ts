@@ -29,4 +29,31 @@ export const submitApplicationSchema = z.discriminatedUnion("resumeSource", [
     .strict(),
 ]);
 
+export const listCandidateApplicationsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
+  })
+  .strict();
+
+export const listAdminApplicationsQuerySchema =
+  listCandidateApplicationsQuerySchema.extend({
+    jobId: z.cuid("A valid job ID is required.").optional(),
+  });
+
+export const applicationIdParamsSchema = z
+  .object({
+    applicationId: z.cuid("A valid application ID is required."),
+  })
+  .strict();
+
+export type ListCandidateApplicationsQuery = z.infer<
+  typeof listCandidateApplicationsQuerySchema
+>;
+
+export type ListAdminApplicationsQuery = z.infer<
+  typeof listAdminApplicationsQuerySchema
+>;
+
+export type ApplicationIdParams = z.infer<typeof applicationIdParamsSchema>;
 export type SubmitApplicationInput = z.infer<typeof submitApplicationSchema>;
