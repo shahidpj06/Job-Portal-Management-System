@@ -14,6 +14,7 @@ export const paths = {
   applications: '/applications',
   admin: {
     applications: '/admin/applications',
+    companies: '/admin/companies',
     dashboard: '/admin/dashboard',
     jobs: '/admin/jobs',
     'new-job': '/admin/jobs/new',

@@ -16,6 +16,7 @@ import { ProfilePage } from '@/views/profile/profile-page';
 import { PublicLayout } from './layouts/public-layout';
 import { RouteGuard } from './guards/route-guard';
 import { SignupPage } from '@/views/auth/signup-page';
+import { AdminCompaniesPage } from '@/views/admin/companies/companies-page';
 
 export const router = createBrowserRouter([
   {
@@ -103,6 +104,10 @@ export const router = createBrowserRouter([
       {
         path: 'applications',
         element: <AdminApplicationsPage />
+      },
+      {
+        path: 'companies',
+        element: <AdminCompaniesPage />
       },
       {
         path: 'jobs/new',

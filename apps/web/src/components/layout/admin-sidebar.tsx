@@ -5,7 +5,8 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,11 @@ const ADMIN_NAV = [
     label: 'Applications',
     href: paths.admin.applications,
     icon: FileText
+  },
+  {
+    label: 'Companies',
+    href: paths.admin.companies,
+    icon: Building2
   },
   { label: 'Profile', href: paths.admin.profile, icon: User }
 ];
