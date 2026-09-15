@@ -10,6 +10,7 @@ import {
   adminCompaniesRouter,
   adminDashboardRouter,
   adminJobsRouter,
+  adminUsersRouter,
   applicationsRouter,
   authRouter,
   jobsRouter,
@@ -46,6 +47,7 @@ app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
 app.use(`${baseRoute}/applications`, applicationsRouter);
 app.use(`${baseRoute}/admin/applications`, adminApplicationsRouter);
 app.use(`${baseRoute}/admin/dashboard`, adminDashboardRouter);
+app.use(`${baseRoute}/admin/users`, adminUsersRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

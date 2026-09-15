@@ -113,7 +113,7 @@ const DEFAULT_VALUES: IJobFormData = {
   workMode: 'HYBRID'
 };
 
-export const AdminJobFormPage = () => {
+export const AdminJobEditorPage = () => {
   const { id: jobId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(jobId);
@@ -137,7 +137,6 @@ export const AdminJobFormPage = () => {
   });
 
   const [createJob, { isLoading: isCreating }] = useCreateJobMutation();
-
   const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation();
 
   const {

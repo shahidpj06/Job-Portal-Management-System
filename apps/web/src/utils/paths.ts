@@ -19,6 +19,7 @@ export const paths = {
     jobs: '/admin/jobs',
     'new-job': '/admin/jobs/new',
     'edit-job': (id: string) => `/admin/jobs/${id}/edit`,
-    profile: '/admin/profile'
+    profile: '/admin/profile',
+    users: '/admin/users',
   }
 };

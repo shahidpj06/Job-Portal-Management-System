@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Menu, Briefcase, LayoutDashboard, User } from 'lucide-react';
+import { Bell, Menu, Briefcase, LayoutDashboard, User, FileText, Building2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,6 +20,21 @@ import { cn } from '@/lib/utils';
 const ADMIN_NAV = [
   { label: 'Dashboard', href: paths.admin.dashboard, icon: LayoutDashboard },
   { label: 'Jobs', href: paths.admin.jobs, icon: Briefcase },
+  {
+    label: 'Applications',
+    href: paths.admin.applications,
+    icon: FileText
+  },
+  {
+    label: 'Companies',
+    href: paths.admin.companies,
+    icon: Building2
+  },
+  {
+    label: 'Users',
+    href: paths.admin.users,
+    icon: Users
+  },
   { label: 'Profile', href: paths.admin.profile, icon: User }
 ];
 

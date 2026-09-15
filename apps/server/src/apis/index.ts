@@ -6,3 +6,4 @@ export { profileRouter } from "./profile.api.js";
 export { applicationsRouter } from "./applications.api.js";
 export { adminApplicationsRouter } from "./admin/applications.api.js";
 export { adminDashboardRouter } from "./admin/dashboard.api.js";
+export { adminUsersRouter } from "./admin/users.api.js";
