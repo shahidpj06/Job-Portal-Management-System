@@ -14,6 +14,9 @@ export const routes = {
     },
     dashboard: {
       summary: 'admin/dashboard/summary'
+    },
+    users: {
+      root: 'admin/users'
     }
   },
   auth: {

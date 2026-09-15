@@ -29,6 +29,8 @@ The Job Portal App Changes - used Jira for tracking the project
   [FEATURE] App: Candidate and admin application lists
 - [JBM-19](https://shahidpj06.atlassian.net/browse/JBM-19)
   [FEATURE] App: Company management for Admin
+- [JBM-20](https://shahidpj06.atlassian.net/browse/JBM-20)
+  [FEATURE] App: Admin user directory
 
 ### Changes
 

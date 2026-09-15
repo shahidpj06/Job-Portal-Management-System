@@ -1,5 +1,5 @@
 import { AdminDashboardPage } from '@/views/admin/dashboard/dashboard-page';
-import { AdminJobFormPage } from '@/views/admin/admin-job-form-page';
+import { AdminJobEditorPage } from '@/views/admin/job-editor/job-editor-page';
 import { AdminJobsPage } from '@/views/admin/jobs/jobs';
 import { AdminLayout } from './layouts/admin-layout';
 import { AdminApplicationsPage } from '@/views/admin/applications/applications-page';
@@ -17,6 +17,7 @@ import { PublicLayout } from './layouts/public-layout';
 import { RouteGuard } from './guards/route-guard';
 import { SignupPage } from '@/views/auth/signup-page';
 import { AdminCompaniesPage } from '@/views/admin/companies/companies-page';
+import { AdminUsersPage } from '@/views/admin/users/users-page';
 
 export const router = createBrowserRouter([
   {
@@ -110,12 +111,16 @@ export const router = createBrowserRouter([
         element: <AdminCompaniesPage />
       },
       {
+        path: 'users',
+        element: <AdminUsersPage />
+      },
+      {
         path: 'jobs/new',
-        element: <AdminJobFormPage />
+        element: <AdminJobEditorPage />
       },
       {
         path: 'jobs/:id/edit',
-        element: <AdminJobFormPage />
+        element: <AdminJobEditorPage />
       },
       {
         path: 'profile',
