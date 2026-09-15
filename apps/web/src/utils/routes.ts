@@ -23,5 +23,8 @@ export const routes = {
     root: 'profile',
     avatar: 'profile/avatar',
     resume: 'profile/resume'
+  },
+  applications: {
+    root: 'applications'
   }
 } as const;

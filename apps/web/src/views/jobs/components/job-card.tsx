@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Bookmark, Clock, MapPin, Zap } from 'lucide-react';
+import { Bookmark, Clock, MapPin } from 'lucide-react';
 
 import { CompanyLogo } from '@/components/avatar/company-avatar';
 import { Badge } from '@/components/ui/badge';

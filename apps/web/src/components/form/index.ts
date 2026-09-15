@@ -6,7 +6,7 @@ export type {
   ITextFieldProps,
   ITextareaFieldProps,
   IUploadedFileValue,
-  IUploadFieldProps
+  IUploadFieldProps,
 } from './field';
 
 export type { ISimpleFormProps } from './simple-form';

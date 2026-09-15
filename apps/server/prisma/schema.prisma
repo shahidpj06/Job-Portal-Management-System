@@ -178,11 +178,26 @@ model Job {
   @@map("jobs")
 }
 
+model ApplicationResume {
+  applicationId String @id @map("application_id")
+  path          String @unique
+  filename      String
+  contentType   String @map("content_type")
+  size          Int
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("application_resumes")
+}
+
 model Application {
   id          String            @id @default(cuid())
   userId      String            @map("user_id")
   jobId       String            @map("job_id")
   resumeUrl   String?           @map("resume_url")
+  resume      ApplicationResume?
   coverLetter String?           @map("cover_letter") @db.Text
   status      ApplicationStatus @default(SUBMITTED)
 

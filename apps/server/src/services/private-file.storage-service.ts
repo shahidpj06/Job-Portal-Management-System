@@ -115,4 +115,28 @@ export const PrivateFileStorageService = {
       });
     }
   },
+
+  copyResumeFile: async (
+    userId: string,
+    sourcePath: string,
+  ): Promise<string> => {
+    assertOwnedPath(userId, sourcePath);
+
+    const destinationPath = `${userId}/${randomUUID()}.pdf`;
+
+    const { error } = await storageClient.storage
+      .from(PRIVATE_BUCKETS.resume)
+      .copy(sourcePath, destinationPath);
+
+    if (error) {
+      throw new ApiError({
+        statusCode: 502,
+        code: "APPLICATION_RESUME_COPY_FAILED",
+        message:
+          "Your saved resume could not be prepared. Please try again or upload a PDF.",
+      });
+    }
+
+    return destinationPath;
+  },
 };

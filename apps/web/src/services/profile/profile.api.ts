@@ -89,6 +89,7 @@ export const profileApi = apiService.injectEndpoints({
 
 export const {
   useGetProfileQuery,
+  useLazyGetProfileQuery,
   useUpdateProfileMutation,
   useUploadProfileFileMutation,
   useGetProfileFileAccessQuery,
