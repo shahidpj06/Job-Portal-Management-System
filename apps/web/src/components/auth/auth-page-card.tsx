@@ -14,7 +14,7 @@ export interface IAuthPageCardProps extends PropsWithChildren {
 
 export const AuthPageCard = ({ children, description, footer, title }: IAuthPageCardProps) => {
   return (
-    <main className='flex min-h-[calc(90vh-1rem)] items-center justify-center bg-muted/30 px-4 py-12'>
+    <main className='flex min-h-[calc(100vh-1rem)] items-center justify-center bg-muted/30 px-4 py-12'>
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
           <Link

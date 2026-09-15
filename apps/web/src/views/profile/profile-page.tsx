@@ -1,102 +1,202 @@
-import { Link } from 'react-router-dom';
-import { Briefcase, FileText, MapPin, Phone, Mail, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import { Briefcase } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+
+import { ErrorState } from '@/components/common/error-state';
+import { LoadingState } from '@/components/common/loading-state';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { paths } from '@/utils/paths';
-import { getInitials, formatDate } from '@/utils/formatters';
-import { mockCandidate } from '@/mocks';
+import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
+import {
+  useGetProfileFileAccessQuery,
+  useGetProfileQuery,
+  useLazyGetProfileFileAccessQuery,
+  useUpdateProfileMutation,
+  useUploadProfileFileMutation
+} from '@/services/profile/profile.api';
+import type { IUpdateProfileRequest, ProfileUploadKind } from '@/types';
+import { formatDate } from '@/utils/formatters';
+import { paths } from '@/utils/paths';
+
+import { ProfileDetailsForm } from './components/profile-details-form';
+import { ProfileFilesForm } from './components/profile-files-form';
+import { ProfileSidebar } from './components/profile-sidebar';
 
 export const ProfilePage = () => {
   const { user } = useAuthSession();
+  const { pathname } = useLocation();
+  const userId = user?.id;
+  const profileFormRef = useRef<HTMLDivElement>(null);
 
-  if (!user) {
+  const [activeTab, setActiveTab] = useState(pathname === paths.profile ? 'about' : 'settings');
+
+  const { currentData, error, isFetching, isError, refetch } = useGetProfileQuery(
+    userId ?? skipToken,
+    {
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  const profile = currentData?.data.profile;
+
+  const hasAvatar = useMemo(
+    () => profile?.profileFiles.some((file) => file.kind === 'AVATAR') ?? false,
+    [profile?.profileFiles]
+  );
+
+  const memberSince = useMemo(() => (profile ? formatDate(profile.createdAt) : ''), [profile]);
+
+  const { currentData: avatarAccess } = useGetProfileFileAccessQuery(
+    userId && hasAvatar ? { userId, kind: 'avatar' } : skipToken,
+    {
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 4 * 60 * 1000
+    }
+  );
+
+  const [updateProfile] = useUpdateProfileMutation();
+  const [uploadProfileFile] = useUploadProfileFileMutation();
+  const [getFileAccess, { isFetching: isDownloadingResume }] = useLazyGetProfileFileAccessQuery();
+
+  const onTabChange = useCallback((value: unknown) => {
+    if (value === 'about' || value === 'settings') {
+      setActiveTab(value);
+    }
+  }, []);
+
+  const onEdit = useCallback(() => {
+    setActiveTab('settings');
+
+    if (window.matchMedia('(min-width: 64rem)').matches) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const form = profileFormRef.current;
+
+      if (!form) {
+        return;
+      }
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      form.focus({ preventScroll: true });
+      form.scrollIntoView({
+        behavior: prefersReducedMotion ? 'instant' : 'smooth',
+        block: 'start'
+      });
+    });
+  }, []);
+
+  const onRetry = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  const onSaveProfile = useCallback(
+    async (data: IUpdateProfileRequest) => {
+      if (!userId) {
+        throw new Error('Sign in again to update your profile.');
+      }
+
+      try {
+        const response = await updateProfile({ userId, data }).unwrap();
+
+        toast.success('Profile updated successfully.');
+
+        return response.data.profile;
+      } catch (requestError) {
+        throw new Error(getApiErrorMessage(requestError, 'Unable to update your profile.'));
+      }
+    },
+    [updateProfile, userId]
+  );
+
+  const onUploadFile = useCallback(
+    async (kind: ProfileUploadKind, file: File) => {
+      if (!userId) {
+        throw new Error('Sign in again to upload a file.');
+      }
+
+      try {
+        const response = await uploadProfileFile({ userId, kind, file }).unwrap();
+
+        toast.success(kind === 'avatar' ? 'Profile photo updated.' : 'Resume updated.');
+
+        return response.data.file;
+      } catch (requestError) {
+        throw new Error(getApiErrorMessage(requestError, 'Unable to upload your file.'));
+      }
+    },
+    [uploadProfileFile, userId]
+  );
+
+  const onUploadAvatar = useCallback((file: File) => onUploadFile('avatar', file), [onUploadFile]);
+  const onUploadResume = useCallback((file: File) => onUploadFile('resume', file), [onUploadFile]);
+
+  const onDownloadResume = useCallback(async () => {
+    if (!userId || isDownloadingResume) {
+      return;
+    }
+
+    try {
+      const response = await getFileAccess({ userId, kind: 'resume' }, false).unwrap();
+
+      window.location.assign(response.data.file.url);
+    } catch (requestError) {
+      toast.error(getApiErrorMessage(requestError, 'Unable to download your resume.'));
+    }
+  }, [getFileAccess, isDownloadingResume, userId]);
+
+  if (!userId) {
     return null;
   }
 
-  const profile = mockCandidate;
+  if (!profile) {
+    return (
+      <div className='mx-auto max-w-[1200px] px-4 py-8 md:px-8'>
+        {isError ? (
+          <ErrorState
+            title='Unable to load your profile'
+            description={getApiErrorMessage(error)}
+            onRetry={onRetry}
+          />
+        ) : (
+          <LoadingState />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='mx-auto max-w-[1200px] px-4 py-8 md:px-8'>
-      <div className='grid gap-6 lg:grid-cols-3'>
-        {/* Profile sidebar */}
-        <div className='space-y-4'>
-          <Card>
-            <CardContent className='p-6 text-center'>
-              <Avatar className='mx-auto mb-4 h-20 w-20'>
-                <AvatarFallback className='bg-primary text-primary-foreground text-2xl'>
-                  {getInitials(user.firstName, user.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              <h2 className='text-lg font-bold'>
-                {user.firstName} {user.lastName}
-              </h2>
-              {profile.headline && (
-                <p className='mt-1 text-sm text-muted-foreground'>{profile.headline}</p>
-              )}
-              <div className='mt-3 space-y-1.5 text-sm text-muted-foreground text-left'>
-                <div className='flex items-center gap-2'>
-                  <Mail className='h-4 w-4 shrink-0' />
-                  <span className='truncate'>{user.email}</span>
-                </div>
-                {profile.location && (
-                  <div className='flex items-center gap-2'>
-                    <MapPin className='h-4 w-4 shrink-0' />
-                    {profile.location}
-                  </div>
-                )}
-                {profile.phone && (
-                  <div className='flex items-center gap-2'>
-                    <Phone className='h-4 w-4 shrink-0' />
-                    {profile.phone}
-                  </div>
-                )}
-              </div>
-              <Button className='mt-4 w-full' size='sm' variant='outline' asChild>
-                <Link to={paths['profile-resume']}>
-                  <Edit className='mr-1.5 h-4 w-4' />
-                  Edit Profile
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+      {isError && (
+        <p role='alert' className='mb-4 text-sm text-destructive'>
+          We couldn’t refresh your profile. Your last loaded information is shown.
+        </p>
+      )}
 
-          <Card>
-            <CardContent className='p-5'>
-              <h3 className='mb-3 font-semibold text-sm uppercase tracking-wide text-muted-foreground'>
-                Skills
-              </h3>
-              <div className='flex flex-wrap gap-2'>
-                {(profile.skills ?? []).map((s) => (
-                  <Badge key={s} variant='secondary'>
-                    {s}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {isFetching && (
+        <p role='status' className='mb-4 text-sm text-muted-foreground'>
+          Refreshing profile…
+        </p>
+      )}
 
-          {profile.resumeUrl && (
-            <Card>
-              <CardContent className='p-5'>
-                <a
-                  href={profile.resumeUrl}
-                  className='flex items-center gap-2 text-sm font-medium text-primary hover:underline'
-                >
-                  <FileText className='h-4 w-4' />
-                  View Resume
-                </a>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+      <div className='grid items-start gap-6 lg:grid-cols-3'>
+        <ProfileSidebar
+          key={`sidebar-${profile.id}`}
+          profile={profile}
+          avatarUrl={avatarAccess?.data.file.url}
+          isDownloadingResume={isDownloadingResume}
+          onEdit={onEdit}
+          onDownloadResume={onDownloadResume}
+          onUploadAvatar={onUploadAvatar}
+        />
 
-        {/* Main content */}
-        <div className='lg:col-span-2'>
-          <Tabs defaultValue='about'>
+        <div className='min-w-0 lg:col-span-2'>
+          <Tabs value={activeTab} onValueChange={onTabChange}>
             <TabsList className='mb-4'>
               <TabsTrigger value='about'>About</TabsTrigger>
               <TabsTrigger value='settings'>Settings</TabsTrigger>
@@ -106,42 +206,49 @@ export const ProfilePage = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2 text-base'>
-                    <Briefcase className='h-4 w-4' />
+                    <Briefcase aria-hidden='true' className='size-4' />
                     About Me
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent>
-                  {profile.bio ? (
-                    <p className='text-sm leading-relaxed text-muted-foreground'>{profile.bio}</p>
-                  ) : (
-                    <p className='text-sm text-muted-foreground italic'>No bio added yet.</p>
-                  )}
-                  <div className='mt-4 pt-4 border-t border-border text-sm text-muted-foreground'>
-                    Member since {formatDate(profile.joinedAt)}
+                  <p className='whitespace-pre-wrap break-words text-sm leading-relaxed text-muted-foreground'>
+                    {profile.bio || 'No bio added yet.'}
+                  </p>
+
+                  <div className='mt-4 border-t border-border pt-4 text-sm text-muted-foreground'>
+                    Member since {memberSince}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value='settings'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-base'>Account Settings</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4 text-sm text-muted-foreground'>
-                  <p>
-                    Email notifications, password changes, and account management options will
-                    appear here.
-                  </p>
-                  <Button variant='outline' size='sm' asChild>
-                    <Link to={paths['profile-security']}>Security Settings</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+            <TabsContent value='settings' keepMounted className='data-[hidden]:hidden'>
+              <div className='space-y-6'>
+                <div
+                  ref={profileFormRef}
+                  tabIndex={-1}
+                  role='region'
+                  aria-label='Edit profile details'
+                  className='scroll-mt-24 rounded-xl focus-visible:outline-2 focus-visible:outline-ring'
+                >
+                  <ProfileDetailsForm
+                    key={`details-${profile.id}`}
+                    profile={profile}
+                    onSave={onSaveProfile}
+                  />
+                </div>
+
+                <ProfileFilesForm
+                  key={`files-${profile.id}`}
+                  files={profile.profileFiles}
+                  onUploadResume={onUploadResume}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
       </div>
     </div>
   );
-}
+};

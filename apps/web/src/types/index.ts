@@ -5,3 +5,4 @@ export * from './common';
 export * from './company';
 export * from './job';
 export * from './user';
+export * from './profile';
