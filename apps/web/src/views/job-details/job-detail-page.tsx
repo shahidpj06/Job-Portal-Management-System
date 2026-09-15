@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { toast } from 'sonner';
 
@@ -14,9 +14,32 @@ import { JobDetailsContent } from './components/job-details-content';
 import { JobDetailsHeader } from './components/job-details-header';
 import { JobDetailsOverview } from './components/job-details-overview';
 import { CompanyDetailsCard } from './components/company-details-card';
+import type { IProfileFile } from '@/types/profile';
+import { useSubmitApplicationMutation } from '@/services/application/application.api';
+import { useAuthSession } from '@/services/auth';
+import { useLazyGetProfileQuery } from '@/services/profile/profile.api';
+import { JobApplicationDialog } from './components/job-application-dialog';
+import type { ISubmitApplicationRequest } from '@/types/application';
+
+interface IApplicationDialogContext {
+  jobId: string;
+  userId: string;
+  savedResume?: IProfileFile;
+}
 
 export const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { isAuthenticated, status, user } = useAuthSession();
+  const applicationRequestIdRef = useRef(0);
+  const [loadProfile, { isFetching: isLoadingApplicationProfile }] = useLazyGetProfileQuery();
+
+  const [submitApplication, { isLoading: isSubmittingApplication }] =
+    useSubmitApplicationMutation();
+
+  const [applicationContext, setApplicationContext] = useState<IApplicationDialogContext | null>(
+    null
+  );
 
   const {
     currentData: response,
@@ -24,9 +47,14 @@ export const JobDetailPage = () => {
     isError,
     isFetching,
     refetch
-  } = useGetPublicJobDetailsQuery(id || skipToken);
+  } = useGetPublicJobDetailsQuery(id && status !== 'checking' ? id : skipToken);
 
   const job = response?.data.job;
+
+  const isLoadingJobDetails = useMemo(
+    () => Boolean(id) && (status === 'checking' || isFetching),
+    [id, status, isFetching]
+  );
 
   const isNotFound = useMemo(() => {
     return !id || (error !== undefined && 'status' in error && error.status === 404);
@@ -44,15 +72,115 @@ export const JobDetailPage = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [id]);
 
+  useEffect(() => {
+    setApplicationContext(null);
+
+    return () => {
+      applicationRequestIdRef.current += 1;
+    };
+  }, [id, user?.id]);
+
   const onRetry = useCallback(() => {
-    if (id) {
+    if (id && status !== 'checking') {
       void refetch();
     }
-  }, [id, refetch]);
+  }, [id, status, refetch]);
 
-  const onApply = useCallback(() => {
-    toast.info('Application submission is not available yet.');
+  const onApply = useCallback(async () => {
+    if (
+      !job ||
+      status === 'checking' ||
+      isLoadingApplicationProfile ||
+      isSubmittingApplication ||
+      applicationContext
+    ) {
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      toast.info('Sign in as a candidate to apply.');
+      navigate(paths.auth.login);
+      return;
+    }
+
+    if (user.role !== 'USER') {
+      toast.info('Only candidate accounts can apply for jobs.');
+      return;
+    }
+
+    const requestId = ++applicationRequestIdRef.current;
+
+    try {
+      const profileResponse = await loadProfile(user.id, false).unwrap();
+
+      if (requestId !== applicationRequestIdRef.current) {
+        return;
+      }
+
+      const profile = profileResponse.data.profile;
+
+      if (profile.id !== user.id) {
+        toast.error('Your session changed. Please try again.');
+        return;
+      }
+
+      setApplicationContext({
+        jobId: job.id,
+        userId: user.id,
+        savedResume: profile.profileFiles.find((file) => file.kind === 'RESUME')
+      });
+    } catch (error) {
+      if (requestId !== applicationRequestIdRef.current) {
+        return;
+      }
+
+      toast.error(
+        getApiErrorMessage(error, 'Unable to load your resume. Click Apply to try again.')
+      );
+    }
+  }, [
+    applicationContext,
+    isAuthenticated,
+    isLoadingApplicationProfile,
+    isSubmittingApplication,
+    job,
+    loadProfile,
+    navigate,
+    status,
+    user
+  ]);
+
+  const onCloseApplication = useCallback(() => {
+    applicationRequestIdRef.current += 1;
+    setApplicationContext(null);
   }, []);
+
+  const onSubmitApplication = useCallback(
+    async (request: ISubmitApplicationRequest) => {
+      if (
+        !isAuthenticated ||
+        user?.role !== 'USER' ||
+        !applicationContext ||
+        applicationContext.userId !== user.id ||
+        applicationContext.jobId !== id ||
+        request.jobId !== applicationContext.jobId
+      ) {
+        throw {
+          data: {
+            message: 'Your session or selected job changed. Reopen the application.'
+          }
+        };
+      }
+
+      const requestId = applicationRequestIdRef.current;
+      const response = await submitApplication(request).unwrap();
+
+      if (requestId === applicationRequestIdRef.current) {
+        toast.success(response.message);
+      }
+    },
+    [applicationContext, id, isAuthenticated, submitApplication, user]
+  );
 
   const onShare = useCallback(async () => {
     try {
@@ -72,14 +200,14 @@ export const JobDetailPage = () => {
         </Link>
       </Button>
 
-      <div aria-busy={isFetching}>
-        {isFetching && (
+      <div aria-busy={isLoadingJobDetails}>
+        {isLoadingJobDetails && (
           <p role='status' className='mb-4 text-sm text-muted-foreground'>
             Loading job details…
           </p>
         )}
 
-        {!job && isFetching && <LoadingState />}
+        {!job && isLoadingJobDetails && <LoadingState />}
 
         {(isNotFound || isError) && (
           <ErrorState
@@ -109,6 +237,27 @@ export const JobDetailPage = () => {
           </div>
         )}
       </div>
+      {isLoadingApplicationProfile && (
+        <p role='status' className='mt-4 text-sm text-muted-foreground'>
+          Preparing your application…
+        </p>
+      )}
+
+      {job &&
+        isAuthenticated &&
+        user?.role === 'USER' &&
+        applicationContext &&
+        applicationContext.jobId === job.id &&
+        applicationContext.userId === user.id && (
+          <JobApplicationDialog
+            key={`${applicationContext.userId}:${applicationContext.jobId}`}
+            jobId={applicationContext.jobId}
+            jobTitle={job.title}
+            savedResume={applicationContext.savedResume}
+            onClose={onCloseApplication}
+            onSubmit={onSubmitApplication}
+          />
+        )}
     </div>
   );
 };

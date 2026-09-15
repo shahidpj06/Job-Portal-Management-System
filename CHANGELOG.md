@@ -22,6 +22,8 @@ The Job Portal App Changes
   [FEATURE] App: Public job discovery and details
 - [JBM-16](https://shahidpj06.atlassian.net/browse/JBM-16)
   [FEATURE] App: Candidate profile and resume management
+- [JBM-17](https://shahidpj06.atlassian.net/browse/JBM-17)
+  [FEATURE] App: Job application submission
 
 ### Changes
 

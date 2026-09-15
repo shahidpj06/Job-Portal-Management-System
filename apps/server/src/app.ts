@@ -8,6 +8,7 @@ import { sendSuccess } from "./tools/api-response.js";
 import {
   adminCompaniesRouter,
   adminJobsRouter,
+  applicationsRouter,
   authRouter,
   jobsRouter,
   profileRouter,
@@ -40,6 +41,7 @@ app.use(`${baseRoute}/jobs`, jobsRouter);
 app.use(`${baseRoute}/profile`, profileRouter);
 app.use(`${baseRoute}/admin/companies`, adminCompaniesRouter);
 app.use(`${baseRoute}/admin/jobs`, adminJobsRouter);
+app.use(`${baseRoute}/applications`, applicationsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

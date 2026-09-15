@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { Briefcase, LogIn, Menu, Shield } from 'lucide-react';
+import { Briefcase, LogIn, Menu } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';

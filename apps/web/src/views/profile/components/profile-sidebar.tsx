@@ -2,7 +2,6 @@ import { Edit, FileText, LoaderCircle, Mail, MapPin, Phone } from 'lucide-react'
 import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Field } from '@/components/form';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
