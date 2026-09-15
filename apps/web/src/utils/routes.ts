@@ -1,7 +1,8 @@
 export const routes = {
   admin: {
     companies: {
-      root: 'admin/companies'
+      root: 'admin/companies',
+      byId: (companyId: string) => `admin/companies/${encodeURIComponent(companyId)}`
     },
     jobs: {
       root: 'admin/jobs',

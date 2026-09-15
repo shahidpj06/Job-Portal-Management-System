@@ -1,6 +1,6 @@
 # Change Log
 
-The Job Portal App Changes
+The Job Portal App Changes - used Jira for tracking the project
 
 ### Added
 
@@ -14,6 +14,7 @@ The Job Portal App Changes
   [FEATURE] Server: Authentication API: JWT, Refresh Tokens, and Authorization
 - [JBM-10](https://shahidpj06.atlassian.net/browse/JBM-10)
   [FEATURE] App: Frontend Authentication Integration - Redux, RTK Query, Session and Route Guards
+  
 - [JBM-12](https://shahidpj06.atlassian.net/browse/JBM-12)
   [FEATURE] Server: Job CRUD Apis for Admin
 - [JBM-13](https://shahidpj06.atlassian.net/browse/JBM-13)
@@ -26,6 +27,8 @@ The Job Portal App Changes
   [FEATURE] App: Job application submission
 - [JBM-18](https://shahidpj06.atlassian.net/browse/JBM-18)
   [FEATURE] App: Candidate and admin application lists
+- [JBM-19](https://shahidpj06.atlassian.net/browse/JBM-19)
+  [FEATURE] App: Company management for Admin
 
 ### Changes
 
