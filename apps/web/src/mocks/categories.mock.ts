@@ -1,6 +1,6 @@
 import type { JobCategory } from "../types";
 
-export const mockCategories: JobCategory[] = [
+export const categoriesData: JobCategory[] = [
   {
     id: "cat_eng",
     name: "Engineering",

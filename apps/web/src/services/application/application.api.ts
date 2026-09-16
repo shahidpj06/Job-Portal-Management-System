@@ -7,9 +7,15 @@ import type {
   IApplicationListArguments,
   IApplicationListResult,
   IApplicationSubmissionResult,
-  ISubmitApplicationRequest
+  ISubmitApplicationRequest,
+  ApplicationStatus
 } from '@/types';
 import { routes } from '@/utils/routes';
+
+interface IUpdateApplicationStatusArguments {
+  applicationId: string;
+  status: ApplicationStatus;
+}
 
 export const applicationApi = apiService.injectEndpoints({
   endpoints: (builder) => ({
@@ -89,6 +95,21 @@ export const applicationApi = apiService.injectEndpoints({
         { type: 'Application', id: applicationId }
       ],
       keepUnusedDataFor: 0
+    }),
+
+    updateApplicationStatus: builder.mutation<
+      ApiSuccessResponse<{ application: { id: string; status: ApplicationStatus; updatedAt: string } }>,
+      IUpdateApplicationStatusArguments
+    >({
+      query: ({ applicationId, status }) => ({
+        url: routes.admin.applications.statusById(applicationId),
+        method: 'PATCH',
+        body: { status }
+      }),
+      invalidatesTags: (_result, _error, { applicationId }) => [
+        { type: 'Application', id: 'LIST' },
+        { type: 'Application', id: applicationId }
+      ]
     })
   })
 });
@@ -98,5 +119,6 @@ export const {
   useListCandidateApplicationsQuery,
   useListAdminApplicationsQuery,
   useGetAdminApplicationDetailsQuery,
-  useLazyGetAdminApplicationDetailsQuery
+  useLazyGetAdminApplicationDetailsQuery,
+  useUpdateApplicationStatusMutation
 } = applicationApi;

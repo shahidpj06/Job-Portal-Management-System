@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
 import { ErrorState, LoadingState } from '@/components/common';
 import { ApplicationStatusBadge } from '@/components/jobs/application-status-badge';
@@ -12,7 +12,24 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import type { IApplicationDetails } from '@/types/application';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import type { ApplicationStatus, IApplicationDetails } from '@/types/application';
+import { formatApplicationStatus } from '@/utils/formatters';
+
+const APPLICATION_STATUSES: ApplicationStatus[] = [
+  'SUBMITTED',
+  'REVIEWING',
+  'INTERVIEWING',
+  'OFFER',
+  'REJECTED',
+  'HIRED'
+];
 
 interface ApplicationDetailsDialogProps {
   open: boolean;
@@ -20,12 +37,16 @@ interface ApplicationDetailsDialogProps {
   isLoading: boolean;
   errorMessage?: string;
   resumeMessage?: string;
+  isUpdatingStatus?: boolean;
   onClose: () => void;
   onRetry: () => void;
   onResumeClick: (event: MouseEvent<HTMLAnchorElement>) => void;
+  onUpdateStatus: (applicationId: string, status: ApplicationStatus) => void;
 }
 
 export const ApplicationDetailsDialog = ((props: ApplicationDetailsDialogProps) => {
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | ''>('');
+
   const applicantName = useMemo(() => {
     if (!props.application) {
       return 'Applicant details';
@@ -45,7 +66,25 @@ export const ApplicationDetailsDialog = ((props: ApplicationDetailsDialogProps) 
     [props.onClose]
   );
 
+  // Reset selected status whenever a new application is opened
   const application = props.application;
+  const currentStatus = application?.status;
+
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatus(value as ApplicationStatus);
+  }, []);
+
+  const handleSaveStatus = useCallback(() => {
+    if (!application || !selectedStatus || selectedStatus === currentStatus) return;
+    props.onUpdateStatus(application.id, selectedStatus as ApplicationStatus);
+    setSelectedStatus('');
+  }, [application, currentStatus, selectedStatus, props.onUpdateStatus]);
+
+  const isSaveDisabled =
+    !selectedStatus ||
+    selectedStatus === currentStatus ||
+    props.isUpdatingStatus ||
+    props.isLoading;
 
   return (
     <Dialog open={props.open} onOpenChange={onOpenChange}>
@@ -53,7 +92,7 @@ export const ApplicationDetailsDialog = ((props: ApplicationDetailsDialogProps) 
         <DialogHeader className='pr-8'>
           <DialogTitle>{applicantName}</DialogTitle>
           <DialogDescription>
-            Review the applicant’s current profile and submitted application.
+            Review the applicant's current profile and submitted application.
           </DialogDescription>
         </DialogHeader>
 
@@ -164,7 +203,37 @@ export const ApplicationDetailsDialog = ((props: ApplicationDetailsDialogProps) 
           </div>
         ) : null}
 
-        <DialogFooter>
+        <DialogFooter className='flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          {application && (
+            <div className='flex items-center gap-2'>
+              <Select
+                value={selectedStatus || application.status}
+                onValueChange={handleStatusChange}
+                disabled={props.isUpdatingStatus || props.isLoading}
+              >
+                <SelectTrigger className='w-40'>
+                  <SelectValue placeholder='Change status' />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPLICATION_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {formatApplicationStatus(status)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                type='button'
+                size='sm'
+                onClick={handleSaveStatus}
+                disabled={isSaveDisabled}
+              >
+                {props.isUpdatingStatus ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+          )}
+
           <Button type='button' variant='outline' onClick={props.onClose}>
             Close
           </Button>

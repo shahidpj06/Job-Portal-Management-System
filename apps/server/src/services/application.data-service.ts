@@ -10,7 +10,10 @@ import {
 } from "../generated/prisma/enums.js";
 
 import { prisma } from "../database/index.js";
-import type { SubmitApplicationInput } from "../schemas/application.schema.js";
+import type {
+  SubmitApplicationInput,
+  UpdateApplicationStatusInput,
+} from "../schemas/application.schema.js";
 import { ApiError } from "../tools/api-error.js";
 import { validateProfileFile } from "../tools/profile-file.helper.js";
 import { PrivateFileStorageService } from "./private-file.storage-service.js";
@@ -279,5 +282,34 @@ export const ApplicationDataService = {
 
       throw error;
     }
+  },
+
+  updateStatus: async (
+    applicationId: string,
+    input: UpdateApplicationStatusInput,
+    database: PrismaClient = prisma,
+  ) => {
+    const existing = await database.application.findUnique({
+      where: { id: applicationId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new ApiError({
+        statusCode: 404,
+        code: "APPLICATION_NOT_FOUND",
+        message: "The requested application could not be found.",
+      });
+    }
+
+    return database.application.update({
+      where: { id: applicationId },
+      data: { status: input.status },
+      select: {
+        id: true,
+        status: true,
+        updatedAt: true,
+      },
+    });
   },
 };

@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  mockCareerMilestones,
-  mockCategories,
-  mockHeroMetrics,
-  mockPopularSearches,
-  mockWhyChoosePoints
+  careerMilestonesData,
+  categoriesData,
+  heroMetricsData,
+  popularSearchesData,
+  benfitPointsData
 } from '@/mocks';
 import { useAuthSession } from '@/services/auth';
 import { useListPublicJobsQuery } from '@/services/job';
@@ -44,14 +44,14 @@ export const HomePage = () => {
     <div className='flex flex-col overflow-hidden'>
       <HeroSection
         eyebrow='Over 10,000 jobs updated daily'
-        popularSearches={mockPopularSearches}
+        popularSearches={popularSearchesData}
         subtitle={`Browse thousands of opportunities from top companies. ${APP_CONFIG.name} connects talented professionals with their ideal roles.`}
         title='Find work that moves your career forward'
       />
 
-      <StatsSection metrics={mockHeroMetrics} />
+      <StatsSection metrics={heroMetricsData} />
 
-      <CategoriesSection categories={mockCategories} />
+      <CategoriesSection categories={categoriesData} />
 
       <RecentJobsSection
         isError={isError}
@@ -63,8 +63,8 @@ export const HomePage = () => {
       <PlatformBenefitsSection
         appName={APP_CONFIG.name}
         isAuthenticated={isAuthenticated}
-        milestones={mockCareerMilestones}
-        benefits={mockWhyChoosePoints}
+        milestones={careerMilestonesData}
+        benefits={benfitPointsData}
       />
 
       <CtaBanner
