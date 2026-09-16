@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { getApiErrorMessage } from '@/services/api';
 import type { IProfileFile, ISubmitApplicationRequest } from '@/types';
-import { applicationFormSchema, type ApplicationFormValues } from './job-application-helper';
+import { applicationFormSchema, type ApplicationFormValues } from '@/schemas/job-application-schema';
 
 interface IJobApplicationDialogProps {
   jobId: string;

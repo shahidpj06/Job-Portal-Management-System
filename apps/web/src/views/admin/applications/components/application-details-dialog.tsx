@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 
 import { ErrorState, LoadingState } from '@/components/common';
 import { ApplicationStatusBadge } from '@/components/jobs/application-status-badge';
@@ -25,7 +25,7 @@ interface ApplicationDetailsDialogProps {
   onResumeClick: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export const ApplicationDetailsDialog = memo((props: ApplicationDetailsDialogProps) => {
+export const ApplicationDetailsDialog = ((props: ApplicationDetailsDialogProps) => {
   const applicantName = useMemo(() => {
     if (!props.application) {
       return 'Applicant details';
@@ -173,5 +173,3 @@ export const ApplicationDetailsDialog = memo((props: ApplicationDetailsDialogPro
     </Dialog>
   );
 });
-
-ApplicationDetailsDialog.displayName = 'ApplicationDetailsDialog';

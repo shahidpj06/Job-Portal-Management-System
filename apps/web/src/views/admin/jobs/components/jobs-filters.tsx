@@ -1,5 +1,4 @@
-import { memo } from 'react';
-
+import { SearchInput } from '@/components/search/search-input';
 import {
   Select,
   SelectContent,
@@ -9,7 +8,6 @@ import {
 } from '@/components/ui/select';
 import type { ExperienceLevel, JobCategoryCode } from '@/types';
 import { formatExperience } from '@/utils/formatters';
-import { SearchInput } from '@/components/search/search-input';
 
 export const ALL_JOB_FILTER_VALUE = 'ALL' as const;
 
@@ -17,7 +15,45 @@ export type AdminJobCategoryFilter = JobCategoryCode | typeof ALL_JOB_FILTER_VAL
 
 export type AdminJobExperienceFilter = ExperienceLevel | typeof ALL_JOB_FILTER_VALUE;
 
-interface IJobsFiltersProps {
+const CATEGORY_OPTIONS: Array<{
+  label: string;
+  value: JobCategoryCode;
+}> = [
+  {
+    label: 'Design',
+    value: 'DESIGN'
+  },
+  {
+    label: 'Engineering',
+    value: 'ENGINEERING'
+  },
+  {
+    label: 'Marketing',
+    value: 'MARKETING'
+  },
+  {
+    label: 'Operations',
+    value: 'OPERATIONS'
+  },
+  {
+    label: 'Product',
+    value: 'PRODUCT'
+  },
+  {
+    label: 'Sales',
+    value: 'SALES'
+  }
+];
+
+const EXPERIENCE_OPTIONS: ExperienceLevel[] = [
+  'DIRECTOR',
+  'ENTRY_LEVEL',
+  'EXECUTIVE',
+  'MID_LEVEL',
+  'SENIOR_LEVEL'
+];
+
+interface AdminJobsFiltersProps {
   category: AdminJobCategoryFilter;
   experienceLevel: AdminJobExperienceFilter;
   onCategoryChange: (value: string) => void;
@@ -26,77 +62,54 @@ interface IJobsFiltersProps {
   search: string;
 }
 
-const CATEGORY_OPTIONS: Array<{
-  label: string;
-  value: JobCategoryCode;
-}> = [
-  { label: 'Engineering', value: 'ENGINEERING' },
-  { label: 'Design', value: 'DESIGN' },
-  { label: 'Product', value: 'PRODUCT' },
-  { label: 'Marketing', value: 'MARKETING' },
-  { label: 'Sales', value: 'SALES' },
-  { label: 'Operations', value: 'OPERATIONS' }
-];
-
-const EXPERIENCE_OPTIONS: ExperienceLevel[] = [
-  'ENTRY_LEVEL',
-  'MID_LEVEL',
-  'SENIOR_LEVEL',
-  'DIRECTOR',
-  'EXECUTIVE'
-];
-
-const JobsFilters = ({
+export const AdminJobsFilters = ({
   category,
   experienceLevel,
   onCategoryChange,
   onExperienceChange,
   onSearchChange,
   search
-}: IJobsFiltersProps) => {
-  return (
-    <div className='mb-4 grid gap-3 md:grid-cols-[minmax(220px,1fr)_200px_200px]'>
-      <SearchInput
-        id='admin-job-search'
-        value={search}
-        onValueChange={onSearchChange}
-        placeholder='Search by job or company…'
-        aria-label='Search job listings'
-      />
+}: AdminJobsFiltersProps) => (
+  <div className='mb-4 grid gap-3 md:grid-cols-[minmax(220px,1fr)_200px_200px]'>
+    <SearchInput
+      aria-label='Search job listings'
+      id='admin-job-search'
+      onValueChange={onSearchChange}
+      placeholder='Search by job or company…'
+      value={search}
+    />
 
-      <Select value={category} onValueChange={onCategoryChange}>
-        <SelectTrigger aria-label='Filter by category'>
-          <SelectValue placeholder='All categories' />
-        </SelectTrigger>
+    <Select onValueChange={onCategoryChange} value={category}>
+      <SelectTrigger aria-label='Filter by category'>
+        <SelectValue placeholder='All categories' />
+      </SelectTrigger>
 
-        <SelectContent>
-          <SelectItem value={ALL_JOB_FILTER_VALUE}>All categories</SelectItem>
+      <SelectContent>
+        <SelectItem value={ALL_JOB_FILTER_VALUE}>All categories</SelectItem>
 
-          {CATEGORY_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {CATEGORY_OPTIONS.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
 
-      <Select value={experienceLevel} onValueChange={onExperienceChange}>
-        <SelectTrigger aria-label='Filter by experience level'>
-          <SelectValue placeholder='All experience levels' />
-        </SelectTrigger>
+    <Select onValueChange={onExperienceChange} value={experienceLevel}>
+      <SelectTrigger aria-label='Filter by experience level'>
+        <SelectValue placeholder='All experience levels' />
+      </SelectTrigger>
 
-        <SelectContent>
-          <SelectItem value={ALL_JOB_FILTER_VALUE}>All experience levels</SelectItem>
+      <SelectContent>
+        <SelectItem value={ALL_JOB_FILTER_VALUE}>All experience levels</SelectItem>
 
-          {EXPERIENCE_OPTIONS.map((option) => (
-            <SelectItem key={option} value={option}>
-              {formatExperience(option)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-};
+        {EXPERIENCE_OPTIONS.map((experienceOption) => (
+          <SelectItem key={experienceOption} value={experienceOption}>
+            {formatExperience(experienceOption)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+);
 
-export const AdminJobsFilters = memo(JobsFilters);

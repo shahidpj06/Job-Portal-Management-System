@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/common';
@@ -8,14 +8,6 @@ import { ResultsPagination } from '@/components/pagination/pagination';
 import { SearchInput } from '@/components/search/search-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from '@/components/ui/alert-dialog';
 import { useDebouncedValue } from '@/hooks';
 import { getApiErrorMessage } from '@/services/api/get-api-error-message';
 import { useAuthSession } from '@/services/auth';
@@ -29,7 +21,11 @@ import type { ICompany, ICreateCompanyRequest } from '@/types';
 
 import { CompaniesTable } from './components/companies-table';
 import { CompanyFormDialog } from './components/company-form-dialog';
+import { ConfirmActionDialog } from '@/components/dialog/confirm-action-dialog';
 
+const ADMIN_ROLE = 'ADMIN';
+const DEFAULT_PAGE = 1;
+const MAXIMUM_SEARCH_LENGTH = 100;
 const PAGE_SIZE = 10;
 
 interface CompanyEditorState {
@@ -37,185 +33,195 @@ interface CompanyEditorState {
 }
 
 export const AdminCompaniesPage = () => {
-  const { user, isAuthenticated } = useAuthSession();
-  const canManage = isAuthenticated && user?.role === 'ADMIN';
-
-  const [page, setPage] = useState(1);
+  const { isAuthenticated, user } = useAuthSession();
+  const [companyEditor, setCompanyEditor] = useState<CompanyEditorState | null>(null);
+  const [companyPendingDeletion, setCompanyPendingDeletion] = useState<ICompany | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+  const [page, setPage] = useState(DEFAULT_PAGE);
+  const [saveErrorMessage, setSaveErrorMessage] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [editor, setEditor] = useState<CompanyEditorState | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ICompany | null>(null);
-  const [saveError, setSaveError] = useState('');
-  const [deleteError, setDeleteError] = useState('');
-
   const debouncedSearch = useDebouncedValue(searchInput);
   const isSearchPending = searchInput !== debouncedSearch;
+  const canManageCompanies = isAuthenticated && user?.role === ADMIN_ROLE;
 
   const queryArguments = useMemo(
     () =>
-      canManage
+      canManageCompanies
         ? {
-            page,
             limit: PAGE_SIZE,
+            page,
             search: debouncedSearch.trim() || undefined
           }
         : skipToken,
-    [canManage, page, debouncedSearch]
+    [canManageCompanies, debouncedSearch, page]
   );
 
   const {
-    currentData: response,
-    isFetching,
-    isError,
+    currentData: companiesResponse,
     error,
+    isError,
+    isFetching,
     refetch
   } = useListAdminCompaniesQuery(queryArguments, {
     refetchOnMountOrArgChange: true
   });
 
   const [createCompany, { isLoading: isCreating }] = useCreateCompanyMutation();
-  const [updateCompany, { isLoading: isUpdating }] = useUpdateCompanyMutation();
   const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
+  const [updateCompany, { isLoading: isUpdating }] = useUpdateCompanyMutation();
 
+  const companies = companiesResponse?.data.items ?? [];
+  const pagination = companiesResponse?.data.pagination;
   const isSaving = isCreating || isUpdating;
-  const companies = response?.data.items ?? [];
-  const pagination = response?.data.pagination;
 
-  const onSearchChange = useCallback((value: string) => {
-    setSearchInput(value);
-    setPage(1);
-  }, []);
+  const errorMessage = useMemo(
+    () => (isError ? getApiErrorMessage(error) : undefined),
+    [error, isError]
+  );
 
-  const onClearSearch = useCallback(() => {
+  const handleClearSearch = useCallback(() => {
     setSearchInput('');
-    setPage(1);
+    setPage(DEFAULT_PAGE);
   }, []);
 
-  const onFirstPage = useCallback(() => {
-    setPage(1);
-  }, []);
-
-  const onRetry = useCallback(() => {
-    if (canManage) {
-      void refetch();
-    }
-  }, [canManage, refetch]);
-
-  const onCreate = useCallback(() => {
-    setSaveError('');
-    setEditor({});
-  }, []);
-
-  const onEdit = useCallback((company: ICompany) => {
-    setSaveError('');
-    setEditor({ company });
-  }, []);
-
-  const onCloseEditor = useCallback(() => {
+  const handleCloseCompanyEditor = useCallback(() => {
     if (!isSaving) {
-      setEditor(null);
-      setSaveError('');
+      setCompanyEditor(null);
+      setSaveErrorMessage('');
     }
   }, [isSaving]);
 
-  const onSave = useCallback(
-    async (data: ICreateCompanyRequest) => {
-      if (!canManage || !editor || isSaving) {
-        return;
-      }
-
-      setSaveError('');
-
-      try {
-        if (editor.company) {
-          await updateCompany({
-            companyId: editor.company.id,
-            data
-          }).unwrap();
-        } else {
-          await createCompany(data).unwrap();
-        }
-
-        toast.success(editor.company ? 'Company updated.' : 'Company created.');
-        setEditor(null);
-      } catch (requestError) {
-        setSaveError(getApiErrorMessage(requestError));
-      }
-    },
-    [canManage, editor, isSaving, createCompany, updateCompany]
-  );
-
-  const onRequestDelete = useCallback((company: ICompany) => {
-    setDeleteError('');
-    setDeleteTarget(company);
-  }, []);
-
-  const onCloseDelete = useCallback(() => {
+  const handleCloseDeleteDialog = useCallback(() => {
     if (!isDeleting) {
-      setDeleteTarget(null);
-      setDeleteError('');
+      setCompanyPendingDeletion(null);
+      setDeleteErrorMessage('');
     }
   }, [isDeleting]);
 
-  const onDeleteOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        onCloseDelete();
+  const handleCompanyCreate = useCallback(() => {
+    setSaveErrorMessage('');
+    setCompanyEditor({});
+  }, []);
+
+  const handleCompanyDeleteRequest = useCallback((company: ICompany) => {
+    setDeleteErrorMessage('');
+    setCompanyPendingDeletion(company);
+  }, []);
+
+  const handleCompanyEdit = useCallback((company: ICompany) => {
+    setSaveErrorMessage('');
+    setCompanyEditor({
+      company
+    });
+  }, []);
+
+  const handleCompanySave = useCallback(
+    async (companyRequest: ICreateCompanyRequest) => {
+      if (!canManageCompanies || !companyEditor || isSaving) {
+        return;
+      }
+
+      setSaveErrorMessage('');
+
+      try {
+        if (companyEditor.company) {
+          await updateCompany({
+            companyId: companyEditor.company.id,
+            data: companyRequest
+          }).unwrap();
+
+          toast.success('Company updated.');
+        } else {
+          await createCompany(companyRequest).unwrap();
+
+          toast.success('Company created.');
+        }
+
+        setCompanyEditor(null);
+      } catch (requestError) {
+        setSaveErrorMessage(getApiErrorMessage(requestError));
       }
     },
-    [onCloseDelete]
+    [canManageCompanies, companyEditor, createCompany, isSaving, updateCompany]
   );
 
-  const onConfirmDelete = useCallback(async () => {
-    if (!canManage || !deleteTarget || isDeleting) {
+  const handleConfirmDelete = useCallback(async () => {
+    if (!canManageCompanies || !companyPendingDeletion || isDeleting) {
       return;
     }
 
-    setDeleteError('');
-
+    setDeleteErrorMessage('');
     try {
-      await deleteCompany(deleteTarget.id).unwrap();
-      toast.success('Company deleted.');
-      setDeleteTarget(null);
+      await deleteCompany(companyPendingDeletion.id).unwrap();
 
-      if (companies.length === 1 && page > 1) {
-        setPage((previous) => Math.max(1, previous - 1));
+      toast.success('Company deleted.');
+      setCompanyPendingDeletion(null);
+
+      if (companies.length === 1 && page > DEFAULT_PAGE) {
+        setPage((currentPage) => Math.max(DEFAULT_PAGE, currentPage - 1));
       }
     } catch (requestError) {
-      setDeleteError(getApiErrorMessage(requestError));
+      setDeleteErrorMessage(getApiErrorMessage(requestError));
     }
-  }, [canManage, deleteTarget, isDeleting, deleteCompany, companies.length, page]);
+  }, [
+    canManageCompanies,
+    companies.length,
+    companyPendingDeletion,
+    deleteCompany,
+    isDeleting,
+    page
+  ]);
 
-  if (!canManage) {
+  const handleFirstPage = useCallback(() => {
+    setPage(DEFAULT_PAGE);
+  }, []);
+
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(nextPage);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    if (canManageCompanies) {
+      void refetch();
+    }
+  }, [canManageCompanies, refetch]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    setPage(DEFAULT_PAGE);
+  }, []);
+
+  if (!canManageCompanies) {
     return <LoadingState />;
   }
 
   return (
     <div className='space-y-5 p-4 md:p-6'>
       <PageHeader
-        title='Companies'
-        description='Manage the companies associated with job listings.'
         actions={
-          <Button type='button' onClick={onCreate}>
+          <Button onClick={handleCompanyCreate} type='button'>
             <Plus aria-hidden='true' className='mr-2 size-4' />
             Add company
           </Button>
         }
+        description='Manage the companies associated with job listings.'
+        title='Companies'
       />
 
       <Card>
         <CardContent className='space-y-4 p-4'>
           <div className='flex flex-wrap items-center gap-3'>
             <SearchInput
-              value={searchInput}
-              onValueChange={onSearchChange}
-              placeholder='Search companies'
               aria-label='Search companies by name'
-              maxLength={100}
+              maxLength={MAXIMUM_SEARCH_LENGTH}
+              onValueChange={handleSearchChange}
+              placeholder='Search companies'
+              value={searchInput}
               wrapperClassName='w-full sm:max-w-sm'
             />
 
             {searchInput && (
-              <Button type='button' variant='ghost' onClick={onClearSearch}>
+              <Button onClick={handleClearSearch} type='button' variant='ghost'>
                 Clear search
               </Button>
             )}
@@ -223,85 +229,73 @@ export const AdminCompaniesPage = () => {
 
           {isFetching || isSearchPending ? (
             <LoadingState />
-          ) : isError ? (
-            <ErrorState description={getApiErrorMessage(error)} onRetry={onRetry} />
+          ) : errorMessage ? (
+            <ErrorState description={errorMessage} onRetry={handleRetry} />
           ) : companies.length > 0 ? (
             <>
-              <CompaniesTable companies={companies} onEdit={onEdit} onDelete={onRequestDelete} />
+              <CompaniesTable
+                companies={companies}
+                onDelete={handleCompanyDeleteRequest}
+                onEdit={handleCompanyEdit}
+              />
 
               {pagination && (
                 <ResultsPagination
+                  itemLabel='companies'
+                  onPageChange={handlePageChange}
                   page={pagination.page}
                   pageCount={pagination.totalPages}
                   totalItems={pagination.totalItems}
-                  itemLabel='companies'
-                  onPageChange={setPage}
                 />
               )}
             </>
           ) : (
             <EmptyState
-              title='No companies found'
+              action={
+                page > DEFAULT_PAGE ? (
+                  <Button onClick={handleFirstPage} type='button' variant='outline'>
+                    Go to first page
+                  </Button>
+                ) : undefined
+              }
               description={
                 searchInput
                   ? 'Try a different company name.'
                   : 'Add a company to use it in job listings.'
               }
-              action={
-                page > 1 ? (
-                  <Button type='button' variant='outline' onClick={onFirstPage}>
-                    Go to first page
-                  </Button>
-                ) : undefined
-              }
+              title='No companies found'
             />
           )}
         </CardContent>
       </Card>
 
-      {editor && (
+      {companyEditor && (
         <CompanyFormDialog
-          key={editor.company?.id ?? 'create'}
-          company={editor.company}
+          key={companyEditor.company?.id ?? 'create'}
+          company={companyEditor.company}
+          errorMessage={saveErrorMessage}
           isSaving={isSaving}
-          errorMessage={saveError}
-          onClose={onCloseEditor}
-          onSave={onSave}
+          onClose={handleCloseCompanyEditor}
+          onSave={handleCompanySave}
         />
       )}
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={onDeleteOpenChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete company?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Delete {deleteTarget?.name}? This cannot be undone. Companies linked to jobs cannot be
-              deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {deleteError && (
-            <p role='alert' className='text-sm text-destructive'>
-              {deleteError}
-            </p>
-          )}
-
-          <AlertDialogFooter>
-            <Button type='button' variant='outline' disabled={isDeleting} onClick={onCloseDelete}>
-              Cancel
-            </Button>
-
-            <Button
-              type='button'
-              variant='destructive'
-              disabled={isDeleting}
-              onClick={onConfirmDelete}
-            >
-              {isDeleting ? 'Deleting…' : 'Delete company'}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmActionDialog
+        confirmLabel='Delete company'
+        description={
+          companyPendingDeletion
+            ? `Delete ${companyPendingDeletion.name}? This cannot be undone. Companies linked to jobs cannot be deleted.`
+            : ''
+        }
+        errorMessage={deleteErrorMessage}
+        isLoading={isDeleting}
+        loadingLabel='Deleting…'
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        open={Boolean(companyPendingDeletion)}
+        title='Delete company?'
+        variant='destructive'
+      />
     </div>
   );
 };

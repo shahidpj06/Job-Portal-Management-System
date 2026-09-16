@@ -1,5 +1,3 @@
-import { memo } from 'react';
-
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { IApplicationListItem } from '@/types/application';
 
@@ -7,11 +5,15 @@ import { ApplicationTableRow } from './application-table-row';
 
 interface ApplicationsTableProps {
   applications: IApplicationListItem[];
-  onView: (applicationId: string) => void;
   onFilterJob: (jobId: string) => void;
+  onView: (applicationId: string) => void;
 }
 
-export const ApplicationsTable = memo((props: ApplicationsTableProps) => {
+export const ApplicationsTable = ({
+  applications,
+  onFilterJob,
+  onView
+}: ApplicationsTableProps) => {
   return (
     <Table>
       <TableHeader>
@@ -25,17 +27,15 @@ export const ApplicationsTable = memo((props: ApplicationsTableProps) => {
       </TableHeader>
 
       <TableBody>
-        {props.applications.map((application) => (
+        {applications.map((application) => (
           <ApplicationTableRow
             key={application.id}
             application={application}
-            onView={props.onView}
-            onFilterJob={props.onFilterJob}
+            onFilterJob={onFilterJob}
+            onView={onView}
           />
         ))}
       </TableBody>
     </Table>
   );
-});
-
-ApplicationsTable.displayName = 'ApplicationsTable';
+};
