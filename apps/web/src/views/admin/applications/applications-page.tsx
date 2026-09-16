@@ -18,57 +18,82 @@ import { paths } from '@/utils/paths';
 import { ApplicationDetailsDialog } from './components/application-details-dialog';
 import { ApplicationsTable } from './components/applications-table';
 
+const ADMIN_ROLE = 'ADMIN';
+const DEFAULT_PAGE = 1;
 const PAGE_SIZE = 10;
+const RESUME_LINK_EXPIRY_BUFFER_MILLISECONDS = 5_000;
 
 export const AdminApplicationsPage = () => {
-  const { user, isAuthenticated } = useAuthSession();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { isAuthenticated, user } = useAuthSession();
+  const [searchParameters, setSearchParameters] = useSearchParams();
   const [resumeMessage, setResumeMessage] = useState('');
-  const jobId = searchParams.get('jobId') || undefined;
-  const viewerId = isAuthenticated && user?.role === 'ADMIN' ? user.id : undefined;
-
   const [selectedApplication, setSelectedApplication] =
     useState<IApplicationDetailsArguments | null>(null);
 
-  const page = useMemo(() => {
-    const value = Number(searchParams.get('page') ?? '1');
+  const jobId = searchParameters.get('jobId') || undefined;
+  const viewerId = isAuthenticated && user?.role === ADMIN_ROLE ? user.id : undefined;
 
-    return Number.isSafeInteger(value) && value > 0 ? value : 1;
-  }, [searchParams]);
+  const page = useMemo(() => {
+    const pageValue = Number(searchParameters.get('page') ?? DEFAULT_PAGE);
+
+    if (!Number.isSafeInteger(pageValue) || pageValue <= 0) {
+      return DEFAULT_PAGE;
+    }
+
+    return pageValue;
+  }, [searchParameters]);
 
   const listArguments = useMemo(
-    () => (viewerId ? { viewerId, page, limit: PAGE_SIZE, jobId } : skipToken),
-    [viewerId, page, jobId]
+    () =>
+      viewerId
+        ? {
+            jobId,
+            limit: PAGE_SIZE,
+            page,
+            viewerId
+          }
+        : skipToken,
+    [jobId, page, viewerId]
   );
 
   const {
-    currentData: listResponse,
+    currentData: applicationsResponse,
+    error: applicationsError,
+    isError: isApplicationsError,
     isFetching: isFetchingApplications,
-    isError: isListError,
-    error: listError,
     refetch: refetchApplications
   } = useListAdminApplicationsQuery(listArguments);
 
   const detailsArguments = useMemo(
     () =>
       viewerId && selectedApplication?.viewerId === viewerId ? selectedApplication : skipToken,
-    [viewerId, selectedApplication]
+    [selectedApplication, viewerId]
   );
 
   const {
-    currentData: detailsResponse,
-    isFetching: isFetchingDetails,
-    isError: isDetailsError,
-    error: detailsError,
-    refetch: refetchDetails
+    currentData: applicationDetailsResponse,
+    error: applicationDetailsError,
+    isError: isApplicationDetailsError,
+    isFetching: isFetchingApplicationDetails,
+    refetch: refetchApplicationDetails
   } = useGetAdminApplicationDetailsQuery(detailsArguments, {
     refetchOnMountOrArgChange: true
   });
 
-  const applications = listResponse?.data.items;
-  const pagination = listResponse?.data.pagination;
-  const application = detailsResponse?.data.application;
-  const isDetailsOpen = detailsArguments !== skipToken;
+  const applications = applicationsResponse?.data.items ?? [];
+  const pagination = applicationsResponse?.data.pagination;
+  const application = applicationDetailsResponse?.data.application;
+  const isApplicationDetailsOpen = detailsArguments !== skipToken;
+
+  const applicationsErrorMessage = useMemo(
+    () => (isApplicationsError ? getApiErrorMessage(applicationsError) : undefined),
+    [applicationsError, isApplicationsError]
+  );
+
+  const applicationDetailsErrorMessage = useMemo(
+    () => (isApplicationDetailsError ? getApiErrorMessage(applicationDetailsError) : undefined),
+    [applicationDetailsError, isApplicationDetailsError]
+  );
 
   const description = useMemo(() => {
     if (!pagination) {
@@ -78,105 +103,118 @@ export const AdminApplicationsPage = () => {
     return `${pagination.totalItems.toLocaleString()} applications${
       jobId ? ' for the selected job' : ''
     }`;
-  }, [pagination, jobId]);
+  }, [jobId, pagination]);
 
-  const onPageChange = useCallback(
-    (nextPage: number) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        next.set('page', String(nextPage));
-        return next;
-      });
-    },
-    [setSearchParams]
-  );
+  const handleApplicationDetailsClose = useCallback(() => {
+    setSelectedApplication(null);
+    setResumeMessage('');
+  }, []);
 
-  const onFilterJob = useCallback(
-    (nextJobId: string) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        next.set('jobId', nextJobId);
-        next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams]
-  );
+  const handleApplicationDetailsRetry = useCallback(() => {
+    if (isApplicationDetailsOpen) {
+      void refetchApplicationDetails();
+    }
+  }, [isApplicationDetailsOpen, refetchApplicationDetails]);
 
-  const onClearJobFilter = useCallback(() => {
-    setSearchParams((previous) => {
-      const next = new URLSearchParams(previous);
-      next.delete('jobId');
-      next.delete('page');
-      return next;
+  const handleApplicationsRetry = useCallback(() => {
+    if (viewerId) {
+      void refetchApplications();
+    }
+  }, [refetchApplications, viewerId]);
+
+  const handleClearJobFilter = useCallback(() => {
+    setSearchParameters((currentSearchParameters) => {
+      const nextSearchParameters = new URLSearchParams(currentSearchParameters);
+      nextSearchParameters.delete('jobId');
+      nextSearchParameters.delete('page');
+
+      return nextSearchParameters;
     });
-  }, [setSearchParams]);
+  }, [setSearchParameters]);
 
-  const onFirstPage = useCallback(() => {
-    onPageChange(1);
-  }, [onPageChange]);
+  const handleFilterJob = useCallback(
+    (nextJobId: string) => {
+      setSearchParameters((currentSearchParameters) => {
+        const nextSearchParameters = new URLSearchParams(currentSearchParameters);
+        nextSearchParameters.set('jobId', nextJobId);
+        nextSearchParameters.delete('page');
 
-  const onViewApplication = useCallback(
+        return nextSearchParameters;
+      });
+    },
+    [setSearchParameters]
+  );
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      setSearchParameters((currentSearchParameters) => {
+        const nextSearchParameters = new URLSearchParams(currentSearchParameters);
+        nextSearchParameters.set('page', String(nextPage));
+
+        return nextSearchParameters;
+      });
+    },
+    [setSearchParameters]
+  );
+
+  const handleFirstPage = useCallback(() => {
+    handlePageChange(DEFAULT_PAGE);
+  }, [handlePageChange]);
+
+  const handleResumeClick = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>) => {
+      const resume = application?.resume;
+
+      if (!resume || !isApplicationDetailsOpen) {
+        event.preventDefault();
+        return;
+      }
+
+      const resumeExpiryTime = Date.parse(resume.expiresAt);
+
+      const hasValidResumeLink =
+        Number.isFinite(resumeExpiryTime) &&
+        resumeExpiryTime > Date.now() + RESUME_LINK_EXPIRY_BUFFER_MILLISECONDS;
+
+      if (hasValidResumeLink) {
+        return;
+      }
+
+      event.preventDefault();
+
+      setResumeMessage('Refreshing the résumé link…');
+
+      void refetchApplicationDetails().then((result) => {
+        if (result.error) {
+          setResumeMessage('Could not refresh the link. Please try again.');
+          return;
+        }
+
+        setResumeMessage('Link refreshed. Click Download résumé again.');
+      });
+    },
+    [application?.resume, isApplicationDetailsOpen, refetchApplicationDetails]
+  );
+
+  const handleViewApplication = useCallback(
     (applicationId: string) => {
       if (!viewerId) {
         return;
       }
 
       setResumeMessage('');
-      setSelectedApplication({ viewerId, applicationId });
+
+      setSelectedApplication({
+        applicationId,
+        viewerId
+      });
     },
     [viewerId]
   );
 
-  const onCloseDetails = useCallback(() => {
-    setSelectedApplication(null);
-    setResumeMessage('');
-  }, []);
-
-  const onRetryApplications = useCallback(() => {
-    if (viewerId) {
-      void refetchApplications();
-    }
-  }, [viewerId, refetchApplications]);
-
-  const onRetryDetails = useCallback(() => {
-    if (isDetailsOpen) {
-      void refetchDetails();
-    }
-  }, [isDetailsOpen, refetchDetails]);
-
-  const onResumeClick = useCallback(
-    (event: MouseEvent<HTMLAnchorElement>) => {
-      const resume = application?.resume;
-
-      if (!resume || !isDetailsOpen) {
-        event.preventDefault();
-        return;
-      }
-
-      const expiresAt = Date.parse(resume.expiresAt);
-
-      if (Number.isFinite(expiresAt) && expiresAt > Date.now() + 5000) {
-        return;
-      }
-
-      event.preventDefault();
-      setResumeMessage('Refreshing the résumé link…');
-
-      void refetchDetails().then((result) => {
-        setResumeMessage(
-          result.error
-            ? 'Could not refresh the link. Please try again.'
-            : 'Link refreshed. Click Download résumé again.'
-        );
-      });
-    },
-    [application?.resume, isDetailsOpen, refetchDetails]
-  );
-
   return (
     <div className='space-y-5 p-4 md:p-6'>
-      <PageHeader title='Applications' description={description} />
+      <PageHeader description={description} title='Applications' />
 
       <Card>
         <CardContent className='space-y-4 p-4'>
@@ -188,12 +226,12 @@ export const AdminApplicationsPage = () => {
             </p>
 
             <div className='flex flex-wrap gap-2'>
-              <Button asChild variant='outline' size='sm'>
+              <Button asChild size='sm' variant='outline'>
                 <Link to={paths.admin.jobs}>Choose a job</Link>
               </Button>
 
               {jobId && (
-                <Button type='button' variant='ghost' size='sm' onClick={onClearJobFilter}>
+                <Button onClick={handleClearJobFilter} size='sm' type='button' variant='ghost'>
                   Clear job filter
                 </Button>
               )}
@@ -202,42 +240,42 @@ export const AdminApplicationsPage = () => {
 
           {!viewerId || isFetchingApplications ? (
             <LoadingState />
-          ) : isListError ? (
-            <ErrorState description={getApiErrorMessage(listError)} onRetry={onRetryApplications} />
-          ) : applications?.length ? (
+          ) : applicationsErrorMessage ? (
+            <ErrorState description={applicationsErrorMessage} onRetry={handleApplicationsRetry} />
+          ) : applications.length > 0 ? (
             <>
               <ApplicationsTable
                 applications={applications}
-                onView={onViewApplication}
-                onFilterJob={onFilterJob}
+                onFilterJob={handleFilterJob}
+                onView={handleViewApplication}
               />
 
               {pagination && (
                 <ResultsPagination
+                  itemLabel='applications'
+                  onPageChange={handlePageChange}
                   page={pagination.page}
                   pageCount={pagination.totalPages}
                   totalItems={pagination.totalItems}
-                  itemLabel='applications'
-                  onPageChange={onPageChange}
                 />
               )}
             </>
           ) : (
             <EmptyState
-              title={
-                pagination?.totalItems ? 'No applications on this page' : 'No applications yet'
+              action={
+                page > DEFAULT_PAGE ? (
+                  <Button onClick={handleFirstPage} type='button' variant='outline'>
+                    Go to first page
+                  </Button>
+                ) : undefined
               }
               description={
                 jobId
                   ? 'There are no applications to display for this job on this page.'
                   : 'Submitted applications will appear here.'
               }
-              action={
-                page > 1 ? (
-                  <Button type='button' variant='outline' onClick={onFirstPage}>
-                    Go to first page
-                  </Button>
-                ) : undefined
+              title={
+                pagination?.totalItems ? 'No applications on this page' : 'No applications yet'
               }
             />
           )}
@@ -245,14 +283,14 @@ export const AdminApplicationsPage = () => {
       </Card>
 
       <ApplicationDetailsDialog
-        open={isDetailsOpen}
-        application={isDetailsOpen ? application : undefined}
-        isLoading={isFetchingDetails}
-        errorMessage={isDetailsError ? getApiErrorMessage(detailsError) : undefined}
+        application={isApplicationDetailsOpen ? application : undefined}
+        errorMessage={applicationDetailsErrorMessage}
+        isLoading={isFetchingApplicationDetails}
+        onClose={handleApplicationDetailsClose}
+        onResumeClick={handleResumeClick}
+        onRetry={handleApplicationDetailsRetry}
+        open={isApplicationDetailsOpen}
         resumeMessage={resumeMessage}
-        onClose={onCloseDetails}
-        onRetry={onRetryDetails}
-        onResumeClick={onResumeClick}
       />
     </div>
   );

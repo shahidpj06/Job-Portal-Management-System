@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { SlidersHorizontal, TrendingUp } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,107 +19,190 @@ import {
   WORK_MODE_OPTIONS
 } from './jobs-query';
 
+const ALL_FILTER_VALUE = 'all';
+const DEFAULT_CURRENCY = 'INR';
+const DEFAULT_SALARY = 0;
+const MAXIMUM_SALARY = 350_000;
+const MIDDLE_SALARY = 175_000;
+const SALARY_STEP = 10_000;
+
+interface FilterOption {
+  label: string;
+  value: string;
+}
+
 interface JobsFilterCounts {
   category?: Record<string, number>;
-  workMode?: Record<string, number>;
   employmentType?: Record<string, number>;
+  workMode?: Record<string, number>;
 }
 
 interface JobsFiltersProps {
-  query: IPublicJobListQuery;
-  mobileOpen?: boolean;
   counts?: JobsFilterCounts;
+  mobileOpen?: boolean;
   onChange: (key: string, value: string) => void;
-  onToggle: (key: 'employmentType' | 'experienceLevel', value: string) => void;
   onReset: () => void;
+  onToggle: (key: 'employmentType' | 'experienceLevel', value: string) => void;
+  query: IPublicJobListQuery;
 }
 
-export const JobsFilters = (props: JobsFiltersProps) => {
-  const id = useId();
-  const [salaryPreview, setSalaryPreview] = useState(props.query.minSalary ?? 0);
+interface JobsCheckboxFilterGroupProps {
+  counts?: Record<string, number>;
+  groupId: string;
+  label: string;
+  onToggle: (value: string) => void;
+  options: FilterOption[];
+  selectedValues: Set<string>;
+}
+
+interface JobsRadioFilterGroupProps {
+  counts?: Record<string, number>;
+  groupId: string;
+  label: string;
+  onChange: (value: string) => void;
+  options: FilterOption[];
+  value: string;
+}
+
+const JobsCheckboxFilterGroup = ({
+  counts,
+  groupId,
+  label,
+  onToggle,
+  options,
+  selectedValues
+}: JobsCheckboxFilterGroupProps) => (
+  <fieldset className='space-y-3'>
+    <legend className='text-xs font-semibold'>{label}</legend>
+
+    {options.map((option) => {
+      const inputId = `${groupId}-${option.value}`;
+      const optionCount = counts?.[option.value];
+
+      return (
+        <div key={option.value} className='flex items-center gap-2'>
+          <Checkbox
+            checked={selectedValues.has(option.value)}
+            className='size-3.5 rounded-[2px]'
+            id={inputId}
+            onCheckedChange={() => onToggle(option.value)}
+          />
+
+          <Label
+            className='flex flex-1 cursor-pointer items-center justify-between gap-2 text-xs font-normal text-muted-foreground'
+            htmlFor={inputId}
+          >
+            {option.label}
+
+            {optionCount !== undefined && (
+              <Badge className='h-4 bg-primary/10 px-1.5 text-[10px]' variant='secondary'>
+                {optionCount}
+              </Badge>
+            )}
+          </Label>
+        </div>
+      );
+    })}
+  </fieldset>
+);
+
+const JobsRadioFilterGroup = ({
+  counts,
+  groupId,
+  label,
+  onChange,
+  options,
+  value
+}: JobsRadioFilterGroupProps) => {
+  const labelId = `${groupId}-label`;
+
+  return (
+    <fieldset className='space-y-3'>
+      <legend id={labelId} className='text-xs font-semibold'>
+        {label}
+      </legend>
+
+      <RadioGroup
+        aria-labelledby={labelId}
+        className='gap-3'
+        onValueChange={onChange}
+        value={value}
+      >
+        {options.map((option) => {
+          const inputId = `${groupId}-${option.value}`;
+          const optionCount = counts?.[option.value];
+
+          return (
+            <div key={option.value} className='flex items-center gap-2'>
+              <RadioGroupItem className='size-3.5' id={inputId} value={option.value} />
+
+              <Label
+                className='flex flex-1 cursor-pointer items-center justify-between gap-2 text-xs font-normal text-muted-foreground'
+                htmlFor={inputId}
+              >
+                {option.label}
+
+                {optionCount !== undefined && (
+                  <Badge className='h-4 bg-primary/10 px-1.5 text-[10px]' variant='secondary'>
+                    {optionCount}
+                  </Badge>
+                )}
+              </Label>
+            </div>
+          );
+        })}
+      </RadioGroup>
+    </fieldset>
+  );
+};
+
+export const JobsFilters = ({
+  counts,
+  mobileOpen,
+  onChange,
+  onReset,
+  onToggle,
+  query
+}: JobsFiltersProps) => {
+  const filterId = useId();
+
+  const [salaryPreview, setSalaryPreview] = useState(query.minSalary ?? DEFAULT_SALARY);
 
   useEffect(() => {
-    setSalaryPreview(props.query.minSalary ?? 0);
-  }, [props.query.minSalary]);
+    setSalaryPreview(query.minSalary ?? DEFAULT_SALARY);
+  }, [query.minSalary]);
 
-  const radioGroups = useMemo(
-    () => [
-      {
-        key: 'category',
-        label: 'Department',
-        value: props.query.category ?? 'all',
-        options: [{ label: 'All departments', value: 'all' }, ...CATEGORY_OPTIONS],
-        counts: props.counts?.category
-      },
-      {
-        key: 'workMode',
-        label: 'Workplace Type',
-        value: props.query.workMode ?? 'all',
-        options: [{ label: 'All modes', value: 'all' }, ...WORK_MODE_OPTIONS],
-        counts: props.counts?.workMode
-      }
-    ],
-    [props.query.category, props.query.workMode, props.counts?.category, props.counts?.workMode]
-  );
+  const salaryLabel =
+    salaryPreview === DEFAULT_SALARY
+      ? 'Any salary'
+      : new Intl.NumberFormat('en-US', {
+          currency: query.currency ?? DEFAULT_CURRENCY,
+          maximumFractionDigits: 0,
+          notation: 'compact',
+          style: 'currency'
+        }).format(salaryPreview);
 
-  const checkboxGroups = useMemo(
-    () => [
-      {
-        key: 'employmentType' as const,
-        label: 'Employment Type',
-        options: EMPLOYMENT_OPTIONS,
-        selected: new Set<string>(props.query.employmentType ?? []),
-        counts: props.counts?.employmentType
-      },
-      {
-        key: 'experienceLevel' as const,
-        label: 'Seniority Level',
-        options: EXPERIENCE_OPTIONS,
-        selected: new Set<string>(props.query.experienceLevel ?? []),
-        counts: undefined
-      }
-    ],
-    [props.query.employmentType, props.query.experienceLevel, props.counts?.employmentType]
-  );
+  const handleDatePostedChange = (value: string) => {
+    onChange('datePosted', value);
+  };
 
-  const salaryLabel = useMemo(() => {
-    if (salaryPreview === 0) {
-      return 'Any salary';
-    }
+  const handleSalaryCommit = (value: number | readonly number[]) => {
+    const salary = typeof value === 'number' ? value : (value[0] ?? DEFAULT_SALARY);
 
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: props.query.currency ?? 'USD',
-      notation: 'compact',
-      maximumFractionDigits: 0
-    }).format(salaryPreview);
-  }, [salaryPreview, props.query.currency]);
+    onChange('minSalary', salary > DEFAULT_SALARY ? String(salary) : ALL_FILTER_VALUE);
+  };
 
-  const onSalaryPreviewChange = useCallback((value: number | readonly number[]) => {
-    setSalaryPreview(typeof value === 'number' ? value : (value[0] ?? 0));
-  }, []);
+  const handleSalaryPreviewChange = (value: number | readonly number[]) => {
+    const salary = typeof value === 'number' ? value : (value[0] ?? DEFAULT_SALARY);
 
-  const onSalaryCommit = useCallback(
-    (value: number | readonly number[]) => {
-      const amount = typeof value === 'number' ? value : (value[0] ?? 0);
-
-      props.onChange('minSalary', amount > 0 ? String(amount) : 'all');
-    },
-    [props.onChange]
-  );
-
-  const onDatePostedChange = useCallback(
-    (value: string) => {
-      props.onChange('datePosted', value);
-    },
-    [props.onChange]
-  );
+    setSalaryPreview(salary);
+  };
 
   return (
     <Card
       className={cn(
         'rounded-2xl border-0 bg-surface py-5 shadow-none ring-0',
-        props.mobileOpen === false && 'hidden md:flex'
+        mobileOpen === false && 'hidden md:flex'
       )}
     >
       <CardHeader className='flex flex-row items-center justify-between px-5'>
@@ -129,154 +212,111 @@ export const JobsFilters = (props: JobsFiltersProps) => {
         </h2>
 
         <Button
+          className='h-auto p-0 text-xs'
+          onClick={onReset}
+          size='sm'
           type='button'
           variant='link'
-          size='sm'
-          onClick={props.onReset}
-          className='h-auto p-0 text-xs'
         >
           Reset all
         </Button>
       </CardHeader>
 
       <CardContent className='space-y-7 px-5 pt-5'>
-        {radioGroups.map((group) => (
-          <fieldset key={group.key} className='space-y-3'>
-            <legend id={`${id}-${group.key}-label`} className='text-xs font-semibold'>
-              {group.label}
-            </legend>
+        <JobsRadioFilterGroup
+          counts={counts?.category}
+          groupId={`${filterId}-category`}
+          label='Department'
+          onChange={(value) => onChange('category', value)}
+          options={[
+            {
+              label: 'All departments',
+              value: ALL_FILTER_VALUE
+            },
+            ...CATEGORY_OPTIONS
+          ]}
+          value={query.category ?? ALL_FILTER_VALUE}
+        />
 
-            <RadioGroup
-              value={group.value}
-              aria-labelledby={`${id}-${group.key}-label`}
-              onValueChange={(value: string) => props.onChange(group.key, value)}
-              className='gap-3'
-            >
-              {group.options.map((option) => {
-                const inputId = `${id}-${group.key}-${option.value}`;
-                const count = group.counts?.[option.value];
+        <JobsRadioFilterGroup
+          counts={counts?.workMode}
+          groupId={`${filterId}-work-mode`}
+          label='Workplace Type'
+          onChange={(value) => onChange('workMode', value)}
+          options={[
+            {
+              label: 'All modes',
+              value: ALL_FILTER_VALUE
+            },
+            ...WORK_MODE_OPTIONS
+          ]}
+          value={query.workMode ?? ALL_FILTER_VALUE}
+        />
 
-                return (
-                  <div key={option.value} className='flex items-center gap-2'>
-                    <RadioGroupItem id={inputId} value={option.value} className='size-3.5' />
+        <JobsCheckboxFilterGroup
+          counts={counts?.employmentType}
+          groupId={`${filterId}-employment-type`}
+          label='Employment Type'
+          onToggle={(value) => onToggle('employmentType', value)}
+          options={EMPLOYMENT_OPTIONS}
+          selectedValues={new Set<string>(query.employmentType ?? [])}
+        />
 
-                    <Label
-                      htmlFor={inputId}
-                      className='flex flex-1 cursor-pointer items-center justify-between gap-2 text-xs font-normal text-muted-foreground'
-                    >
-                      {option.label}
+        <JobsCheckboxFilterGroup
+          groupId={`${filterId}-experience-level`}
+          label='Seniority Level'
+          onToggle={(value) => onToggle('experienceLevel', value)}
+          options={EXPERIENCE_OPTIONS}
+          selectedValues={new Set<string>(query.experienceLevel ?? [])}
+        />
 
-                      {count !== undefined && (
-                        <Badge variant='secondary' className='h-4 bg-primary/10 px-1.5 text-[10px]'>
-                          {count}
-                        </Badge>
-                      )}
-                    </Label>
-                  </div>
-                );
-              })}
-            </RadioGroup>
-          </fieldset>
-        ))}
-
-        {checkboxGroups.map((group) => (
-          <fieldset key={group.key} className='space-y-3'>
-            <legend className='text-xs font-semibold'>{group.label}</legend>
-
-            {group.options.map((option) => {
-              const inputId = `${id}-${group.key}-${option.value}`;
-              const count = group.counts?.[option.value];
-
-              return (
-                <div key={option.value} className='flex items-center gap-2'>
-                  <Checkbox
-                    id={inputId}
-                    checked={group.selected.has(option.value)}
-                    onCheckedChange={() => props.onToggle(group.key, option.value)}
-                    className='size-3.5 rounded-[2px]'
-                  />
-
-                  <Label
-                    htmlFor={inputId}
-                    className='flex flex-1 cursor-pointer items-center justify-between gap-2 text-xs font-normal text-muted-foreground'
-                  >
-                    {option.label}
-
-                    {count !== undefined && (
-                      <Badge variant='secondary' className='h-4 bg-primary/10 px-1.5 text-[10px]'>
-                        {count}
-                      </Badge>
-                    )}
-                  </Label>
-                </div>
-              );
-            })}
-          </fieldset>
-        ))}
-
-        <section className='space-y-3' aria-labelledby={`${id}-salary`}>
+        <section aria-labelledby={`${filterId}-salary`} className='space-y-3'>
           <div className='flex items-center justify-between gap-2'>
-            <h3 id={`${id}-salary`} className='text-xs font-semibold'>
+            <h3 id={`${filterId}-salary`} className='text-xs font-semibold'>
               Salary Target
             </h3>
 
             <span className='text-xs font-semibold text-primary'>
               {salaryLabel}
-              {salaryPreview > 0 ? '+' : ''}
+              {salaryPreview > DEFAULT_SALARY ? '+' : ''}
             </span>
           </div>
 
           <Slider
-            value={[salaryPreview]}
-            min={0}
-            max={350_000}
-            step={10_000}
-            onValueChange={onSalaryPreviewChange}
-            onValueCommitted={onSalaryCommit}
+            max={MAXIMUM_SALARY}
+            min={DEFAULT_SALARY}
+            onValueChange={handleSalaryPreviewChange}
+            onValueCommitted={handleSalaryCommit}
+            step={SALARY_STEP}
             thumbLabel='Salary target'
+            value={[salaryPreview]}
           />
 
           <div className='flex justify-between text-[10px] text-muted-foreground'>
             <span>Any</span>
-            <span>175k</span>
-            <span>350k+</span>
+            <span>{`${MIDDLE_SALARY / 1000}k`}</span>
+            <span>{`${MAXIMUM_SALARY / 1000}k+`}</span>
           </div>
 
           <p className='text-[10px] leading-relaxed text-muted-foreground'>
-            {props.query.currency ?? 'USD'} only when a salary target is selected. Matches
+            {query.currency ?? DEFAULT_CURRENCY} only when a salary target is selected. Matches
             advertised maximum salaries at or above your target.
           </p>
         </section>
 
-        <fieldset className='space-y-3'>
-          <legend id={`${id}-date-label`} className='text-xs font-semibold'>
-            Date Posted
-          </legend>
-
-          <RadioGroup
-            value={props.query.datePosted ?? 'all'}
-            onValueChange={onDatePostedChange}
-            aria-labelledby={`${id}-date-label`}
-            className='gap-3'
-          >
-            {[{ label: 'Any time', value: 'all' }, ...DATE_POSTED_OPTIONS].map((option) => (
-              <div key={option.value} className='flex items-center gap-2'>
-                <RadioGroupItem
-                  id={`${id}-date-${option.value}`}
-                  value={option.value}
-                  className='size-3.5'
-                />
-
-                <Label
-                  htmlFor={`${id}-date-${option.value}`}
-                  className='cursor-pointer text-xs font-normal text-muted-foreground'
-                >
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </fieldset>
+        <JobsRadioFilterGroup
+          groupId={`${filterId}-date-posted`}
+          label='Date Posted'
+          onChange={handleDatePostedChange}
+          options={[
+            {
+              label: 'Any time',
+              value: ALL_FILTER_VALUE
+            },
+            ...DATE_POSTED_OPTIONS
+          ]}
+          value={query.datePosted ?? ALL_FILTER_VALUE}
+        />
 
         <div className='space-y-2 rounded-xl bg-primary/10 p-3'>
           <p className='flex items-center gap-1.5 text-xs font-semibold text-primary'>

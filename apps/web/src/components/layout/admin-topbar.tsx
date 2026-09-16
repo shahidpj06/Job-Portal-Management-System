@@ -1,82 +1,133 @@
-import { useState } from 'react';
+import {
+  Bell,
+  Briefcase,
+  Building2,
+  FileText,
+  LayoutDashboard,
+  Menu,
+  User,
+  Users
+} from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Menu, Briefcase, LayoutDashboard, User, FileText, Building2, Users } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useAuthSession } from '@/services/auth';
-import { paths } from '@/utils/paths';
-import { APP_CONFIG } from '@/utils/global-config';
-import { getInitials } from '@/utils/formatters';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { APP_CONFIG } from '@/utils/global-config';
+import { paths } from '@/utils/paths';
+import { AuthenticatedAccountMenu } from '@/app/layouts/authenticated-account-menu';
 
-const ADMIN_NAV = [
-  { label: 'Dashboard', href: paths.admin.dashboard, icon: LayoutDashboard },
-  { label: 'Jobs', href: paths.admin.jobs, icon: Briefcase },
+
+const ADMIN_NAVIGATION = [
   {
-    label: 'Applications',
+    href: paths.admin.dashboard,
+    icon: LayoutDashboard,
+    label: 'Dashboard'
+  },
+  {
+    href: paths.admin.jobs,
+    icon: Briefcase,
+    label: 'Jobs'
+  },
+  {
     href: paths.admin.applications,
-    icon: FileText
+    icon: FileText,
+    label: 'Applications'
   },
   {
-    label: 'Companies',
     href: paths.admin.companies,
-    icon: Building2
+    icon: Building2,
+    label: 'Companies'
   },
   {
-    label: 'Users',
     href: paths.admin.users,
-    icon: Users
+    icon: Users,
+    label: 'Users'
   },
-  { label: 'Profile', href: paths.admin.profile, icon: User }
+  {
+    href: paths.admin.profile,
+    icon: User,
+    label: 'Profile'
+  }
 ];
 
-export const AdminTopbar = () => {
-  const { user, logout } = useAuthSession();
-  const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+const isAdminNavigationActive = (currentPath: string, navigationPath: string) => {
+  if (navigationPath === paths.admin.dashboard) {
+    return currentPath === navigationPath;
+  }
 
-  const pageTitle = ADMIN_NAV.find((n) => location.pathname.startsWith(n.href))?.label ?? 'Admin';
+  return currentPath === navigationPath || currentPath.startsWith(`${navigationPath}/`);
+};
+
+export const AdminTopbar = () => {
+  const location = useLocation();
+
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+
+  const pageTitle = useMemo(() => {
+    const activeNavigationItem = ADMIN_NAVIGATION.find((navigationItem) =>
+      isAdminNavigationActive(location.pathname, navigationItem.href)
+    );
+
+    return activeNavigationItem?.label ?? 'Admin';
+  }, [location.pathname]);
+
+  const handleMobileNavigationClose = useCallback(() => {
+    setIsMobileNavigationOpen(false);
+  }, []);
+
+  const handleMobileNavigationOpenChange = useCallback((isOpen: boolean) => {
+    setIsMobileNavigationOpen(isOpen);
+  }, []);
 
   return (
     <header className='flex h-16 items-center justify-between border-b border-border bg-surface px-4 md:px-6'>
       <div className='flex items-center gap-3'>
-        {/* Mobile menu */}
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <Sheet onOpenChange={handleMobileNavigationOpenChange} open={isMobileNavigationOpen}>
           <SheetTrigger asChild className='lg:hidden'>
-            <Button variant='ghost' size='icon' aria-label='Open navigation'>
-              <Menu className='h-5 w-5' />
+            <Button aria-label='Open navigation' size='icon' type='button' variant='ghost'>
+              <Menu aria-hidden='true' className='size-5' />
             </Button>
           </SheetTrigger>
-          <SheetContent side='left' className='w-64 p-0'>
+
+          <SheetContent className='w-64 p-0' side='left'>
             <SheetTitle className='flex h-16 items-center gap-2 border-b border-border px-4 text-lg font-bold text-primary'>
-              <Briefcase className='h-5 w-5' />
+              <Briefcase aria-hidden='true' className='size-5' />
+
               {APP_CONFIG.name}
             </SheetTitle>
-            <nav className='flex flex-col gap-1 p-3'>
-              {ADMIN_NAV.map((item) => {
-                const isActive = location.pathname.startsWith(item.href);
+
+            <SheetDescription className='sr-only'>Admin navigation</SheetDescription>
+
+            <nav aria-label='Admin navigation' className='flex flex-col gap-1 p-3'>
+              {ADMIN_NAVIGATION.map((navigationItem) => {
+                const isActive = isAdminNavigationActive(location.pathname, navigationItem.href);
+
+                const NavigationIcon = navigationItem.icon;
+
                 return (
                   <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileOpen(false)}
+                    key={navigationItem.href}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       isActive
                         ? 'bg-primary/10 text-primary'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
+                    onClick={handleMobileNavigationClose}
+                    to={navigationItem.href}
                   >
-                    <item.icon className='h-5 w-5 shrink-0' />
-                    {item.label}
+                    <NavigationIcon aria-hidden='true' className='size-5 shrink-0' />
+
+                    {navigationItem.label}
                   </Link>
                 );
               })}
@@ -88,35 +139,12 @@ export const AdminTopbar = () => {
       </div>
 
       <div className='flex items-center gap-2'>
-        <Button variant='ghost' size='icon' aria-label='Notifications'>
-          <Bell className='h-5 w-5' />
+        <Button aria-label='Notifications' size='icon' type='button' variant='ghost'>
+          <Bell aria-hidden='true' className='size-5' />
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-9 gap-2 px-2'>
-              <Avatar className='h-7 w-7'>
-                <AvatarFallback className='bg-primary text-primary-foreground text-xs'>
-                  {user ? getInitials(user.firstName, user.lastName) : 'A'}
-                </AvatarFallback>
-              </Avatar>
-              <span className='hidden text-sm font-medium sm:inline-block'>
-                {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' className='w-48'>
-            <DropdownMenuItem asChild>
-              <Link to={paths.admin.profile}>My Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={paths.home}>View Site</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void logout()}>Sign Out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <AuthenticatedAccountMenu />
       </div>
     </header>
   );
-}
+};

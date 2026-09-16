@@ -1,122 +1,31 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useForm, useWatch, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { FormProvider, type SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import { EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/common';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useListAdminCompaniesQuery } from '@/services/company';
 import { getApiErrorMessage } from '@/services/api';
+import { useListAdminCompaniesQuery } from '@/services/company';
 import { useCreateJobMutation, useGetJobDetailsQuery, useUpdateJobMutation } from '@/services/job';
-import type {
-  EmploymentType,
-  ExperienceLevel,
-  ICreateJobRequest,
-  JobCategoryCode,
-  JobStatus,
-  WorkMode
-} from '@/types';
-import {
-  formatEmploymentType,
-  formatExperience,
-  formatWorkMode
-} from '@/utils/formatters';
+import type { ICreateJobRequest } from '@/types';
 import { paths } from '@/utils/paths';
 
-const EMPLOYMENT_TYPES: EmploymentType[] = [
-  'FULL_TIME',
-  'PART_TIME',
-  'CONTRACT',
-  'FREELANCE',
-  'INTERNSHIP'
-];
+import { JobBasicInformation } from './components/job-basic-information';
+import { JobDetails } from './components/job-details';
+import { JobSalaryRange } from './components/job-salary-range';
+import { JOB_EDITOR_DEFAULT_VALUES, jobEditorSchema, type JobEditorFormData } from '@/schemas/job-editor-schema';
 
-const WORK_MODES: WorkMode[] = ['REMOTE', 'HYBRID', 'ON_SITE'];
-
-const EXPERIENCE_LEVELS: ExperienceLevel[] = [
-  'ENTRY_LEVEL',
-  'MID_LEVEL',
-  'SENIOR_LEVEL',
-  'DIRECTOR',
-  'EXECUTIVE'
-];
-
-const JOB_STATUSES: JobStatus[] = ['PUBLISHED', 'DRAFT', 'CLOSED'];
-
-const CATEGORY_OPTIONS: Array<{
-  label: string;
-  value: JobCategoryCode;
-}> = [
-  { label: 'Engineering', value: 'ENGINEERING' },
-  { label: 'Design', value: 'DESIGN' },
-  { label: 'Product', value: 'PRODUCT' },
-  { label: 'Marketing', value: 'MARKETING' },
-  { label: 'Sales', value: 'SALES' },
-  { label: 'Operations', value: 'OPERATIONS' }
-];
-
-const jobFormSchema = z
-  .object({
-    category: z.enum(['DESIGN', 'ENGINEERING', 'MARKETING', 'OPERATIONS', 'PRODUCT', 'SALES']),
-    companyId: z.string().trim().min(1, 'Company is required.'),
-    currency: z.string().trim().length(3, 'Use a three-letter currency code.'),
-    description: z.string().trim().min(20, 'Description must contain at least 20 characters.'),
-    employmentType: z.enum(['CONTRACT', 'FREELANCE', 'FULL_TIME', 'INTERNSHIP', 'PART_TIME']),
-    experienceLevel: z.enum(['DIRECTOR', 'ENTRY_LEVEL', 'EXECUTIVE', 'MID_LEVEL', 'SENIOR_LEVEL']),
-    location: z.string().trim().min(2, 'Location is required.'),
-    salaryMax: z.number().int().nonnegative('Maximum salary cannot be negative.'),
-    salaryMin: z.number().int().nonnegative('Minimum salary cannot be negative.'),
-    status: z.enum(['CLOSED', 'DRAFT', 'PUBLISHED']),
-    summary: z.string().trim().min(20, 'Summary must contain at least 20 characters.'),
-    title: z.string().trim().min(3, 'Title must contain at least 3 characters.'),
-    workMode: z.enum(['HYBRID', 'ON_SITE', 'REMOTE'])
-  })
-  .superRefine((data, context) => {
-    if (data.salaryMax < data.salaryMin) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Maximum salary cannot be lower than minimum salary.',
-        path: ['salaryMax']
-      });
-    }
-  });
-
-type IJobFormData = z.infer<typeof jobFormSchema>;
-
-const DEFAULT_VALUES: IJobFormData = {
-  category: 'ENGINEERING',
-  companyId: '',
-  currency: 'USD',
-  description: '',
-  employmentType: 'FULL_TIME',
-  experienceLevel: 'MID_LEVEL',
-  location: '',
-  salaryMax: 120000,
-  salaryMin: 80000,
-  status: 'DRAFT',
-  summary: '',
-  title: '',
-  workMode: 'HYBRID'
-};
 
 export const AdminJobEditorPage = () => {
-  const { id: jobId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
-  const isEdit = Boolean(jobId);
+  const { id: jobId } = useParams<{
+    id?: string;
+  }>();
+
+  const isEditing = Boolean(jobId);
 
   const {
     data: companiesResponse,
@@ -133,66 +42,36 @@ export const AdminJobEditorPage = () => {
     isLoading: isJobLoading,
     refetch: refetchJob
   } = useGetJobDetailsQuery(jobId ?? '', {
-    skip: !isEdit
+    skip: !isEditing
   });
 
   const [createJob, { isLoading: isCreating }] = useCreateJobMutation();
   const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation();
 
+  const jobEditorFormMethods = useForm<JobEditorFormData>({
+    defaultValues: JOB_EDITOR_DEFAULT_VALUES,
+    resolver: zodResolver(jobEditorSchema)
+  });
+
   const {
-    control,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
     handleSubmit,
-    register,
-    reset,
-    setValue
-  } = useForm<IJobFormData>({
-    defaultValues: DEFAULT_VALUES,
-    resolver: zodResolver(jobFormSchema)
-  });
-
-  const selectedCategory = useWatch({
-    control,
-    name: 'category'
-  });
-
-  const selectedCompanyId = useWatch({
-    control,
-    name: 'companyId'
-  });
-
-  const selectedEmploymentType = useWatch({
-    control,
-    name: 'employmentType'
-  });
-
-  const selectedExperienceLevel = useWatch({
-    control,
-    name: 'experienceLevel'
-  });
-
-  const selectedStatus = useWatch({
-    control,
-    name: 'status'
-  });
-
-  const selectedWorkMode = useWatch({
-    control,
-    name: 'workMode'
-  });
+    reset
+  } = jobEditorFormMethods;
 
   const companies = companiesResponse?.data.items ?? [];
   const existingJob = jobResponse?.data.job;
-  const isSaving = isCreating || isUpdating || isSubmitting;
+  const isSaving = isCreating || isSubmitting || isUpdating;
 
-  const companySelectItems = useMemo(
+  const pageDescription = useMemo(
     () =>
-      companies.map((company) => ({
-        label: company.name,
-        value: company.id
-      })),
-    [companies]
+      isEditing
+        ? `Editing: ${existingJob?.title ?? 'job listing'}`
+        : 'Fill in the details to create a new listing.',
+    [existingJob?.title, isEditing]
   );
+
+  const pageTitle = useMemo(() => (isEditing ? 'Edit Job' : 'Post New Job'), [isEditing]);
 
   useEffect(() => {
     if (!existingJob) {
@@ -216,23 +95,31 @@ export const AdminJobEditorPage = () => {
     });
   }, [existingJob, reset]);
 
-  const onSubmit = useCallback<SubmitHandler<IJobFormData>>(
+  const handleCompaniesRetry = useCallback(() => {
+    void refetchCompanies();
+  }, [refetchCompanies]);
+
+  const handleJobRetry = useCallback(() => {
+    void refetchJob();
+  }, [refetchJob]);
+
+  const handleJobSubmit = useCallback<SubmitHandler<JobEditorFormData>>(
     async (formData) => {
-      const request: ICreateJobRequest = {
+      const createJobRequest: ICreateJobRequest = {
         ...formData,
         currency: formData.currency.toUpperCase()
       };
 
       try {
-        if (isEdit && jobId) {
+        if (isEditing && jobId) {
           await updateJob({
-            data: request,
+            data: createJobRequest,
             jobId
           }).unwrap();
 
           toast.success('Job listing updated successfully.');
         } else {
-          await createJob(request).unwrap();
+          await createJob(createJobRequest).unwrap();
 
           toast.success('Job listing created successfully.');
         }
@@ -242,15 +129,15 @@ export const AdminJobEditorPage = () => {
         toast.error(
           getApiErrorMessage(
             error,
-            isEdit ? 'Unable to update the job listing.' : 'Unable to create the job listing.'
+            isEditing ? 'Unable to update the job listing.' : 'Unable to create the job listing.'
           )
         );
       }
     },
-    [createJob, isEdit, jobId, navigate, updateJob]
+    [createJob, isEditing, jobId, navigate, updateJob]
   );
 
-  if (isCompaniesLoading || (isEdit && isJobLoading)) {
+  if (isCompaniesLoading || (isEditing && isJobLoading)) {
     return (
       <div className='p-4 md:p-6'>
         <LoadingState />
@@ -263,23 +150,19 @@ export const AdminJobEditorPage = () => {
       <div className='p-4 md:p-6'>
         <ErrorState
           description={getApiErrorMessage(companiesError, 'Unable to load companies.')}
-          onRetry={() => {
-            void refetchCompanies();
-          }}
+          onRetry={handleCompaniesRetry}
           title='Could not load companies'
         />
       </div>
     );
   }
 
-  if (isEdit && isJobError) {
+  if (isEditing && isJobError) {
     return (
       <div className='p-4 md:p-6'>
         <ErrorState
           description={getApiErrorMessage(jobError, 'Unable to load the job listing.')}
-          onRetry={() => {
-            void refetchJob();
-          }}
+          onRetry={handleJobRetry}
           title='Could not load job'
         />
       </div>
@@ -301,287 +184,32 @@ export const AdminJobEditorPage = () => {
     <div className='space-y-5 p-4 md:p-6'>
       <Button asChild className='-ml-2' size='sm' variant='ghost'>
         <Link to={paths.admin.jobs}>
-          <ArrowLeft className='mr-1.5 h-4 w-4' />
+          <ArrowLeft aria-hidden='true' className='mr-1.5 size-4' />
           Back to Jobs
         </Link>
       </Button>
 
-      <PageHeader
-        description={
-          isEdit
-            ? `Editing: ${existingJob?.title ?? 'job listing'}`
-            : 'Fill in the details to create a new listing.'
-        }
-        title={isEdit ? 'Edit Job' : 'Post New Job'}
-      />
+      <PageHeader description={pageDescription} title={pageTitle} />
 
-      <form noValidate onSubmit={handleSubmit(onSubmit)}>
-        <div className='grid gap-6 lg:grid-cols-3'>
-          <div className='space-y-5 lg:col-span-2'>
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-base'>Basic Information</CardTitle>
-              </CardHeader>
+      <FormProvider {...jobEditorFormMethods}>
+        <form noValidate onSubmit={handleSubmit(handleJobSubmit)}>
+          <div className='grid gap-6 lg:grid-cols-3'>
+            <div className='space-y-5 lg:col-span-2'>
+              <JobBasicInformation companies={companies} />
 
-              <CardContent className='space-y-4'>
-                <div className='space-y-1.5'>
-                  <Label htmlFor='job-title'>Job title *</Label>
-                  <Input
-                    id='job-title'
-                    placeholder='e.g. Senior Frontend Developer'
-                    {...register('title')}
-                  />
-                  {errors.title && (
-                    <p className='text-xs text-destructive'>{errors.title.message}</p>
-                  )}
-                </div>
+              <JobSalaryRange />
+            </div>
 
-                <div className='grid gap-4 sm:grid-cols-2'>
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='job-company'>Company *</Label>
+            <div className='space-y-5'>
+              <JobDetails />
 
-                    <Select
-                      items={companySelectItems}
-                      onValueChange={(value) =>
-                        setValue('companyId', value, {
-                          shouldValidate: true
-                        })
-                      }
-                      value={selectedCompanyId}
-                    >
-                      <SelectTrigger id='job-company' className='w-full'>
-                        <SelectValue placeholder='Select company' />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {errors.companyId && (
-                      <p className='text-xs text-destructive'>{errors.companyId.message}</p>
-                    )}
-                  </div>
-
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='job-location'>Location *</Label>
-                    <Input
-                      id='job-location'
-                      placeholder='Remote / City, Country'
-                      {...register('location')}
-                    />
-                    {errors.location && (
-                      <p className='text-xs text-destructive'>{errors.location.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='job-summary'>Summary *</Label>
-                  <Textarea
-                    id='job-summary'
-                    placeholder='Provide a concise overview of the role.'
-                    rows={3}
-                    {...register('summary')}
-                  />
-                  {errors.summary && (
-                    <p className='text-xs text-destructive'>{errors.summary.message}</p>
-                  )}
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='job-description'>Full description *</Label>
-                  <Textarea
-                    id='job-description'
-                    placeholder='Describe the responsibilities and expectations.'
-                    rows={7}
-                    {...register('description')}
-                  />
-                  {errors.description && (
-                    <p className='text-xs text-destructive'>{errors.description.message}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-base'>Salary Range</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className='grid gap-4 sm:grid-cols-3'>
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='salary-currency'>Currency</Label>
-                    <Input
-                      id='salary-currency'
-                      maxLength={3}
-                      placeholder='INR'
-                      {...register('currency')}
-                    />
-                    {errors.currency && (
-                      <p className='text-xs text-destructive'>{errors.currency.message}</p>
-                    )}
-                  </div>
-
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='salary-min'>Minimum</Label>
-                    <Input
-                      id='salary-min'
-                      min={0}
-                      step={1000}
-                      type='number'
-                      {...register('salaryMin', {
-                        valueAsNumber: true
-                      })}
-                    />
-                    {errors.salaryMin && (
-                      <p className='text-xs text-destructive'>{errors.salaryMin.message}</p>
-                    )}
-                  </div>
-
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='salary-max'>Maximum</Label>
-                    <Input
-                      id='salary-max'
-                      min={0}
-                      step={1000}
-                      type='number'
-                      {...register('salaryMax', {
-                        valueAsNumber: true
-                      })}
-                    />
-                    {errors.salaryMax && (
-                      <p className='text-xs text-destructive'>{errors.salaryMax.message}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <Button className='w-full' disabled={isSaving} type='submit'>
+                {isSaving ? 'Saving…' : isEditing ? 'Save Changes' : 'Post Job'}
+              </Button>
+            </div>
           </div>
-
-          <div className='space-y-5'>
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-base'>Job Details</CardTitle>
-              </CardHeader>
-
-              <CardContent className='space-y-4'>
-                <div className='space-y-1.5'>
-                  <Label htmlFor='job-category'>Category *</Label>
-                  <Select
-                    items={CATEGORY_OPTIONS}
-                    onValueChange={(value) =>
-                      setValue('category', value as JobCategoryCode, { shouldValidate: true })
-                    }
-                    value={selectedCategory}
-                  >
-                    <SelectTrigger className='w-full' id='job-category'>
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='employment-type'>Employment type</Label>
-                  <Select
-                    onValueChange={(value) => setValue('employmentType', value as EmploymentType)}
-                    value={selectedEmploymentType}
-                  >
-                    <SelectTrigger className='w-full' id='employment-type'>
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {EMPLOYMENT_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {formatEmploymentType(type)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='work-mode'>Work mode</Label>
-                  <Select
-                    onValueChange={(value) => setValue('workMode', value as WorkMode)}
-                    value={selectedWorkMode}
-                  >
-                    <SelectTrigger className='w-full' id='work-mode'>
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {WORK_MODES.map((mode) => (
-                        <SelectItem key={mode} value={mode}>
-                          {formatWorkMode(mode)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='experience-level'>Experience level</Label>
-                  <Select
-                    onValueChange={(value) => setValue('experienceLevel', value as ExperienceLevel)}
-                    value={selectedExperienceLevel}
-                  >
-                    <SelectTrigger className='w-full' id='experience-level'>
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {EXPERIENCE_LEVELS.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {formatExperience(level)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='job-status'>Status</Label>
-                  <Select
-                    onValueChange={(value) => setValue('status', value as JobStatus)}
-                    value={selectedStatus}
-                  >
-                    <SelectTrigger className='w-full' id='job-status'>
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {JOB_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button className='w-full' disabled={isSaving} type='submit'>
-              {isSaving ? 'Saving…' : isEdit ? 'Save Changes' : 'Post Job'}
-            </Button>
-          </div>
-        </div>
-      </form>
+        </form>
+      </FormProvider>
     </div>
   );
 };

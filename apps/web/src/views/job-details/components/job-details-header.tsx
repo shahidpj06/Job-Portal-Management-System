@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Building2, Clock, MapPin, Share2 } from 'lucide-react';
 
 import { CompanyLogo } from '@/components/avatar/company-avatar';
@@ -20,60 +19,47 @@ interface JobDetailsHeaderProps {
   onShare: () => void;
 }
 
-export const JobDetailsHeader = (props: JobDetailsHeaderProps) => {
-  const salary = useMemo(() => {
-    return formatSalary(props.job.salaryMin, props.job.salaryMax, props.job.currency);
-  }, [props.job.salaryMin, props.job.salaryMax, props.job.currency]);
+export const JobDetailsHeader = ({ job, onApply, onShare }: JobDetailsHeaderProps) => {
+  const categoryLabel = job.category.charAt(0) + job.category.slice(1).toLowerCase();
 
-  const postedAt = useMemo(() => {
-    return formatRelativeDate(props.job.createdAt);
-  }, [props.job.createdAt]);
+  const jobLabels = [
+    formatEmploymentType(job.employmentType),
+    formatExperience(job.experienceLevel),
+    formatWorkMode(job.workMode)
+  ].sort();
 
-  const labels = useMemo(() => {
-    return [
-      formatEmploymentType(props.job.employmentType),
-      formatWorkMode(props.job.workMode),
-      formatExperience(props.job.experienceLevel)
-    ];
-  }, [props.job.employmentType, props.job.workMode, props.job.experienceLevel]);
-
-  const categoryLabel = useMemo(() => {
-    return props.job.category.charAt(0) + props.job.category.slice(1).toLowerCase();
-  }, [props.job.category]);
+  const postedLabel = formatRelativeDate(job.createdAt);
+  const salaryLabel = formatSalary(job.salaryMin, job.salaryMax, job.currency);
 
   return (
     <Card>
       <CardContent className='p-6'>
         <div className='flex items-start gap-4'>
-          <CompanyLogo
-            name={props.job.company.name}
-            logoUrl={props.job.company.logoUrl}
-            className='size-16'
-          />
+          <CompanyLogo className='size-16' logoUrl={job.company.logoUrl} name={job.company.name} />
 
           <div className='min-w-0 flex-1'>
-            <h1 className='break-words text-xl font-bold sm:text-2xl'>{props.job.title}</h1>
+            <h1 className='break-words text-xl font-bold sm:text-2xl'>{job.title}</h1>
 
             <div className='mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
               <span className='inline-flex items-center gap-1'>
                 <Building2 aria-hidden='true' className='size-4 shrink-0' />
-                {props.job.company.name}
+                {job.company.name}
               </span>
 
               <span className='inline-flex items-center gap-1'>
                 <MapPin aria-hidden='true' className='size-4 shrink-0' />
-                {props.job.location}
+                {job.location}
               </span>
 
               <span className='inline-flex items-center gap-1'>
                 <Clock aria-hidden='true' className='size-4 shrink-0' />
-                Posted {postedAt}
+                Posted {postedLabel}
               </span>
             </div>
 
             <div className='mt-3 flex flex-wrap gap-2'>
-              {labels.map((label) => (
-                <Badge key={label} variant='secondary' className='bg-primary/10 text-foreground'>
+              {jobLabels.map((label) => (
+                <Badge key={label} className='bg-primary/10 text-foreground' variant='secondary'>
                   {label}
                 </Badge>
               ))}
@@ -86,21 +72,22 @@ export const JobDetailsHeader = (props: JobDetailsHeaderProps) => {
         <div className='mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <p className='text-xs text-muted-foreground'>Salary Range</p>
-            <p className='text-lg font-bold text-primary'>{salary}</p>
+
+            <p className='text-lg font-bold text-primary'>{salaryLabel}</p>
           </div>
 
           <div className='flex items-center gap-2'>
             <Button
+              aria-label='Copy job link'
+              onClick={onShare}
+              size='sm'
               type='button'
               variant='outline'
-              size='sm'
-              aria-label='Copy job link'
-              onClick={props.onShare}
             >
               <Share2 aria-hidden='true' className='size-4' />
             </Button>
 
-            <Button type='button' size='sm' onClick={props.onApply}>
+            <Button onClick={onApply} size='sm' type='button'>
               Apply Now
             </Button>
           </div>

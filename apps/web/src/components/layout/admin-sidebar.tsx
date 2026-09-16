@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Briefcase,
-  User,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -32,8 +31,7 @@ const ADMIN_NAV = [
     label: 'Users',
     href: paths.admin.users,
     icon: Users
-  },
-  { label: 'Profile', href: paths.admin.profile, icon: User }
+  }
 ];
 
 export function AdminSidebar() {

@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ApplicationStatusBadge } from '@/components/jobs/application-status-badge';
 import { Button } from '@/components/ui/button';
@@ -7,14 +7,18 @@ import type { IApplicationListItem } from '@/types/application';
 
 interface ApplicationTableRowProps {
   application: IApplicationListItem;
-  onView: (applicationId: string) => void;
   onFilterJob: (jobId: string) => void;
+  onView: (applicationId: string) => void;
 }
 
-export const ApplicationTableRow = memo((props: ApplicationTableRowProps) => {
+export const ApplicationTableRow = ({
+  application,
+  onFilterJob,
+  onView
+}: ApplicationTableRowProps) => {
   const applicantName = useMemo(
-    () => `${props.application.user.firstName} ${props.application.user.lastName}`.trim(),
-    [props.application.user.firstName, props.application.user.lastName]
+    () => `${application.user.firstName} ${application.user.lastName}`.trim(),
+    [application.user.firstName, application.user.lastName]
   );
 
   const submittedDate = useMemo(
@@ -23,58 +27,57 @@ export const ApplicationTableRow = memo((props: ApplicationTableRowProps) => {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
-      }).format(new Date(props.application.createdAt)),
-    [props.application.createdAt]
+      }).format(new Date(application.createdAt)),
+    [application.createdAt]
   );
 
-  const onView = useCallback(() => {
-    props.onView(props.application.id);
-  }, [props.onView, props.application.id]);
+  const handleFilterJob = useCallback(() => {
+    onFilterJob(application.job.id);
+  }, [application.job.id, onFilterJob]);
 
-  const onFilterJob = useCallback(() => {
-    props.onFilterJob(props.application.job.id);
-  }, [props.onFilterJob, props.application.job.id]);
+  const handleViewApplication = useCallback(() => {
+    onView(application.id);
+  }, [application.id, onView]);
 
   return (
     <TableRow>
       <TableCell>
         <p className='font-medium'>{applicantName}</p>
-        <p className='text-sm text-muted-foreground'>{props.application.user.email}</p>
+
+        <p className='text-sm text-muted-foreground'>{application.user.email}</p>
       </TableCell>
 
       <TableCell>
         <Button
+          aria-label={`Filter applications for ${application.job.title}`}
+          className='h-auto justify-start p-0 text-left'
+          onClick={handleFilterJob}
           type='button'
           variant='link'
-          className='h-auto justify-start p-0 text-left'
-          onClick={onFilterJob}
-          aria-label={`Filter applications for ${props.application.job.title}`}
         >
-          {props.application.job.title}
+          {application.job.title}
         </Button>
 
-        <p className='text-sm text-muted-foreground'>{props.application.job.company.name}</p>
+        <p className='text-sm text-muted-foreground'>{application.job.company.name}</p>
       </TableCell>
 
       <TableCell>
-        <ApplicationStatusBadge status={props.application.status} />
+        <ApplicationStatusBadge status={application.status} />
       </TableCell>
 
       <TableCell className='text-muted-foreground'>{submittedDate}</TableCell>
 
       <TableCell className='text-right'>
         <Button
+          aria-label={`View application from ${applicantName} for ${application.job.title}`}
+          onClick={handleViewApplication}
+          size='sm'
           type='button'
           variant='outline'
-          size='sm'
-          onClick={onView}
-          aria-label={`View application from ${applicantName} for ${props.application.job.title}`}
         >
           View details
         </Button>
       </TableCell>
     </TableRow>
   );
-});
-
-ApplicationTableRow.displayName = 'ApplicationTableRow';
+};

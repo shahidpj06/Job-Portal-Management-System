@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Bookmark, Clock, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { CompanyLogo } from '@/components/avatar/company-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -16,41 +15,37 @@ import {
 } from '@/utils/formatters';
 import { paths } from '@/utils/paths';
 
+const MAXIMUM_VISIBLE_SKILLS = 3;
+
 interface JobCardProps {
-  job: IJobData;
   isFeatured?: boolean;
   isSaved?: boolean;
   isSaving?: boolean;
+  job: IJobData;
   onApply: (jobId: string) => void;
   onSave?: (jobId: string) => void;
 }
 
-export const JobCard = (props: JobCardProps) => {
-  const salaryLabel = useMemo(() => {
-    return formatSalary(props.job.salaryMin, props.job.salaryMax, props.job.currency);
-  }, [props.job.salaryMin, props.job.salaryMax, props.job.currency]);
+export const JobCard = ({ isFeatured, isSaved, isSaving, job, onApply, onSave }: JobCardProps) => {
+  const jobTags = [
+    ...new Set([
+      ...job.skills.slice(0, MAXIMUM_VISIBLE_SKILLS),
+      formatEmploymentType(job.employmentType),
+      formatExperience(job.experienceLevel)
+    ])
+  ];
 
-  const postedLabel = useMemo(() => {
-    return formatRelativeDate(props.job.createdAt);
-  }, [props.job.createdAt]);
+  const postedLabel = formatRelativeDate(job.createdAt);
 
-  const jobTags = useMemo(() => {
-    return [
-      ...new Set([
-        ...props.job.skills.slice(0, 3),
-        formatEmploymentType(props.job.employmentType),
-        formatExperience(props.job.experienceLevel)
-      ])
-    ];
-  }, [props.job.skills, props.job.employmentType, props.job.experienceLevel]);
+  const salaryLabel = formatSalary(job.salaryMin, job.salaryMax, job.currency);
 
-  const onApply = useCallback(() => {
-    props.onApply(props.job.id);
-  }, [props.onApply, props.job.id]);
+  const handleApply = () => {
+    onApply(job.id);
+  };
 
-  const onSave = useCallback(() => {
-    props.onSave?.(props.job.id);
-  }, [props.onSave, props.job.id]);
+  const handleSave = () => {
+    onSave?.(job.id);
+  };
 
   return (
     <article>
@@ -68,9 +63,9 @@ export const JobCard = (props: JobCardProps) => {
           )}
         >
           <CompanyLogo
-            name={props.job.company.name}
-            logoUrl={props.job.company.logoUrl}
             className='col-start-1 row-start-1 size-12 md:row-span-2'
+            logoUrl={job.company.logoUrl}
+            name={job.company.name}
           />
 
           <div
@@ -80,16 +75,17 @@ export const JobCard = (props: JobCardProps) => {
             )}
           >
             <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
-              <span className='font-semibold'>{props.job.company.name}</span>
+              <span className='font-semibold'>{job.company.name}</span>
 
               <span className='inline-flex items-start gap-1 text-muted-foreground'>
                 <MapPin aria-hidden='true' className='mt-0.5 size-3 shrink-0' />
-                {props.job.location}
+                {job.location}
               </span>
 
               <span className='inline-flex items-center gap-1 text-muted-foreground'>
                 <Clock aria-hidden='true' className='size-3 shrink-0' />
-                <time dateTime={props.job.createdAt}>{postedLabel}</time>
+
+                <time dateTime={job.createdAt}>{postedLabel}</time>
               </span>
             </div>
           </div>
@@ -103,14 +99,14 @@ export const JobCard = (props: JobCardProps) => {
             <div className='flex flex-wrap items-center gap-2'>
               <h2 className='text-xl font-bold leading-snug tracking-tight md:text-base'>
                 <Link
-                  to={paths['job-details'](props.job.id)}
                   className='transition-colors hover:text-primary'
+                  to={paths['job-details'](job.id)}
                 >
-                  {props.job.title}
+                  {job.title}
                 </Link>
               </h2>
 
-              {props.isFeatured && (
+              {isFeatured && (
                 <Badge className='h-5 bg-emerald-700 px-2 text-[10px] text-white'>Featured</Badge>
               )}
             </div>
@@ -122,7 +118,7 @@ export const JobCard = (props: JobCardProps) => {
               'md:col-span-3 md:row-start-3 md:mt-2 md:line-clamp-2'
             )}
           >
-            {props.job.summary}
+            {job.summary}
           </p>
 
           <div
@@ -146,8 +142,8 @@ export const JobCard = (props: JobCardProps) => {
             {jobTags.map((tag) => (
               <Badge
                 key={tag}
+                className='h-auto rounded-full bg-primary/5 px-2.5 py-1 text-[11px] font-normal text-muted-background'
                 variant='secondary'
-                className='h-auto rounded-full bg-primary/5 px-2.5 py-1 text-[11px] text-muted-background font-normal'
               >
                 {tag}
               </Badge>
@@ -162,27 +158,27 @@ export const JobCard = (props: JobCardProps) => {
             )}
           >
             <Button
+              aria-label={isSaved ? `Unsave ${job.title}` : `Save ${job.title}`}
+              aria-pressed={Boolean(isSaved)}
+              className='size-11 shrink-0 rounded-lg bg-primary/5 text-muted-foreground hover:bg-primary/10 md:size-8'
+              disabled={isSaving || !onSave}
+              onClick={handleSave}
+              size='icon'
+              title={onSave ? undefined : 'Saving jobs is not available yet'}
               type='button'
               variant='ghost'
-              size='icon'
-              onClick={onSave}
-              disabled={props.isSaving || !props.onSave}
-              aria-label={props.isSaved ? `Unsave ${props.job.title}` : `Save ${props.job.title}`}
-              aria-pressed={Boolean(props.isSaved)}
-              title={props.onSave ? undefined : 'Saving jobs is not available yet'}
-              className='size-11 shrink-0 rounded-lg bg-primary/5 text-muted-foreground hover:bg-primary/10 md:size-8'
             >
               <Bookmark
                 aria-hidden='true'
                 className='size-4'
-                fill={props.isSaved ? 'currentColor' : 'none'}
+                fill={isSaved ? 'currentColor' : 'none'}
               />
             </Button>
 
             <Button
-              type='button'
-              onClick={onApply}
               className='h-11 flex-1 rounded-lg px-5 font-semibold md:h-8 md:flex-none md:px-4 md:text-xs'
+              onClick={handleApply}
+              type='button'
             >
               View More
             </Button>

@@ -1,78 +1,108 @@
-import { memo, useCallback } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import {
+  Edit,
+  Trash2
+} from 'lucide-react';
+import {
+  useCallback,
+  useState
+} from 'react';
 import { Link } from 'react-router-dom';
 
+import { ConfirmActionDialog } from '@/components/dialog/confirm-action-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import type { IJobData } from '@/types';
 import { paths } from '@/utils/paths';
 
-interface IAdminJobActionsProps {
+interface AdminJobActionsProps {
   isDeleting: boolean;
-  job: Pick<IJobData, 'id' | 'title'>;
-  onDelete: (jobId: string) => Promise<void>;
+  jobId: string;
+  jobTitle: string;
+  onDelete: (
+    jobId: string
+  ) => Promise<void>;
 }
 
-const AdminJobActionsComponent = ({ isDeleting, job, onDelete }: IAdminJobActionsProps) => {
-  const handleDelete = useCallback(() => {
-    void onDelete(job.id);
-  }, [job.id, onDelete]);
+export const AdminJobActions = ({
+  isDeleting,
+  jobId,
+  jobTitle,
+  onDelete
+}: AdminJobActionsProps) => {
+  const [
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen
+  ] = useState(false);
+
+  const handleDelete = useCallback(
+    async () => {
+      await onDelete(jobId);
+
+      setIsDeleteDialogOpen(false);
+    },
+    [
+      jobId,
+      onDelete
+    ]
+  );
+
+  const handleDeleteDialogClose =
+    useCallback(() => {
+      if (!isDeleting) {
+        setIsDeleteDialogOpen(false);
+      }
+    }, [isDeleting]);
+
+  const handleDeleteDialogOpen =
+    useCallback(() => {
+      setIsDeleteDialogOpen(true);
+    }, []);
 
   return (
-    <div className='flex items-center justify-end gap-1'>
-      <Button asChild className='h-8 w-8' size='icon' variant='ghost'>
-        <Link aria-label={`Edit ${job.title}`} to={paths.admin['edit-job'](job.id)}>
-          <Edit className='h-4 w-4' />
-        </Link>
-      </Button>
-
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            aria-label={`Delete ${job.title}`}
-            className='h-8 w-8 text-destructive hover:text-destructive'
-            disabled={isDeleting}
-            size='icon'
-            variant='ghost'
+    <>
+      <div className='flex justify-end gap-2'>
+        <Button
+          asChild
+          size='icon'
+          variant='outline'
+        >
+          <Link
+            aria-label={`Edit ${jobTitle}`}
+            to={paths.admin['edit-job'](
+              jobId
+            )}
           >
-            <Trash2 className='h-4 w-4' />
-          </Button>
-        </AlertDialogTrigger>
+            <Edit
+              aria-hidden='true'
+              className='size-4'
+            />
+          </Link>
+        </Button>
 
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete job listing?</AlertDialogTitle>
+        <Button
+          aria-label={`Delete ${jobTitle}`}
+          disabled={isDeleting}
+          onClick={handleDeleteDialogOpen}
+          size='icon'
+          type='button'
+          variant='ghost'
+        >
+          <Trash2
+            aria-hidden='true'
+            className='size-4'
+          />
+        </Button>
+      </div>
 
-            <AlertDialogDescription>
-              This will permanently remove &ldquo;{job.title}&rdquo;. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-
-            <AlertDialogAction
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-              disabled={isDeleting}
-              onClick={handleDelete}
-            >
-              {isDeleting ? 'Deleting…' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      <ConfirmActionDialog
+        confirmLabel='Delete job'
+        description={`Delete ${jobTitle}? This action cannot be undone.`}
+        isLoading={isDeleting}
+        loadingLabel='Deleting…'
+        onClose={handleDeleteDialogClose}
+        onConfirm={handleDelete}
+        open={isDeleteDialogOpen}
+        title='Delete job?'
+        variant='destructive'
+      />
+    </>
   );
 };
-
-export const AdminJobActions = memo(AdminJobActionsComponent);

@@ -1,6 +1,6 @@
+import { Briefcase, Clock, MapPin } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, Clock, MapPin } from 'lucide-react';
 
 import { CompanyLogo } from '@/components/avatar/company-avatar';
 import { ApplicationStatusBadge } from '@/components/jobs';
@@ -9,15 +9,26 @@ import type { IApplicationListItem } from '@/types';
 import { formatDate } from '@/utils/formatters';
 import { paths } from '@/utils/paths';
 
-interface IApplicationCardProps {
+const PUBLISHED_JOB_STATUS = 'PUBLISHED';
+
+interface ApplicationCardProps {
   application: IApplicationListItem;
 }
 
-export const ApplicationCard = memo(({ application }: IApplicationCardProps) => {
+export const ApplicationCard = memo(({ application }: ApplicationCardProps) => {
   const { job } = application;
-  
-  const appliedAt = useMemo(() => formatDate(application.createdAt), [application.createdAt]);
-  const updatedAt = useMemo(() => formatDate(application.updatedAt), [application.updatedAt]);
+
+  const appliedDateLabel = useMemo(
+    () => formatDate(application.createdAt),
+    [application.createdAt]
+  );
+
+  const updatedDateLabel = useMemo(
+    () => formatDate(application.updatedAt),
+    [application.updatedAt]
+  );
+
+  const isJobPublished = job.status === PUBLISHED_JOB_STATUS;
 
   return (
     <Card className='border border-border bg-surface'>
@@ -25,16 +36,16 @@ export const ApplicationCard = memo(({ application }: IApplicationCardProps) => 
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex min-w-0 items-start gap-4'>
             <CompanyLogo
-              name={job.company.name}
-              logoUrl={job.company.logoUrl}
               className='size-12'
+              logoUrl={job.company.logoUrl}
+              name={job.company.name}
             />
 
             <div className='min-w-0'>
-              {job.status === 'PUBLISHED' ? (
+              {isJobPublished ? (
                 <Link
-                  to={paths['job-details'](job.id)}
                   className='break-words font-semibold transition-colors hover:text-primary'
+                  to={paths['job-details'](job.id)}
                 >
                   {job.title}
                 </Link>
@@ -55,11 +66,11 @@ export const ApplicationCard = memo(({ application }: IApplicationCardProps) => 
 
                 <span className='flex items-center gap-1'>
                   <Clock aria-hidden='true' className='size-3.5 shrink-0' />
-                  Applied {appliedAt}
+                  Applied {appliedDateLabel}
                 </span>
               </div>
 
-              {job.status !== 'PUBLISHED' && (
+              {!isJobPublished && (
                 <p className='mt-1 text-xs text-muted-foreground'>
                   This job is no longer published.
                 </p>
@@ -70,7 +81,7 @@ export const ApplicationCard = memo(({ application }: IApplicationCardProps) => 
           <div className='shrink-0 sm:text-right'>
             <ApplicationStatusBadge status={application.status} />
 
-            <p className='mt-1 text-xs text-muted-foreground'>Updated {updatedAt}</p>
+            <p className='mt-1 text-xs text-muted-foreground'>Updated {updatedDateLabel}</p>
           </div>
         </div>
       </CardContent>
