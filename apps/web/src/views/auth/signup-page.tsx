@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
 import { paths } from '@/utils/paths';
 
-import { SIGNUP_DEFAULT_VALUES, signupSchema, type SignupFormData } from './auth-form.schemas';
+import { SIGNUP_DEFAULT_VALUES, signupSchema, type SignupFormData } from '../../schemas/auth-form.schemas';
 
 export const SignupPage = () => {
   const { isLoading, register: registerAccount } = useAuthSession();

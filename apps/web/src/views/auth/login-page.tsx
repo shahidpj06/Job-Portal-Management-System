@@ -11,7 +11,11 @@ import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
 import { paths } from '@/utils/paths';
 
-import { LOGIN_DEFAULT_VALUES, loginSchema, type LoginFormData } from './auth-form.schemas';
+import {
+  LOGIN_DEFAULT_VALUES,
+  loginSchema,
+  type LoginFormData
+} from '../../schemas/auth-form.schemas';
 
 export const LoginPage = () => {
   const { isAdmin, isAuthenticated, isLoading, login } = useAuthSession();
@@ -30,7 +34,6 @@ export const LoginPage = () => {
     async (formData) => {
       try {
         const user = await login(formData);
-
         toast.success('Welcome back.');
 
         navigate(user.role === 'ADMIN' ? paths.admin.dashboard : paths.jobs, { replace: true });
@@ -77,7 +80,10 @@ export const LoginPage = () => {
           placeholder='••••••••'
           autoComplete='current-password'
           labelAction={
-            <Link className='text-xs text-primary hover:underline' to={paths.auth['forgot-password']}>
+            <Link
+              className='text-xs text-primary hover:underline'
+              to={paths.auth['forgot-password']}
+            >
               Forgot password?
             </Link>
           }

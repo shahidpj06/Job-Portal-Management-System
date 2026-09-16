@@ -3,8 +3,11 @@ import type {
   ApiSuccessResponse,
   AuthSession,
   AuthUser,
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
   LoginRequest,
-  RegisterRequest
+  RegisterRequest,
+  ResetPasswordRequest
 } from '@/types';
 import { routes } from '@/utils/routes';
 
@@ -43,6 +46,30 @@ export const authApi = apiService.injectEndpoints({
       invalidatesTags: ['Auth']
     }),
 
+    changePassword: builder.mutation<ApiSuccessResponse<null>, ChangePasswordRequest>({
+      query: (body) => ({
+        url: routes.auth.changePassword,
+        method: 'POST',
+        body
+      })
+    }),
+
+    forgotPassword: builder.mutation<ApiSuccessResponse<null>, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: routes.auth.forgotPassword,
+        method: 'POST',
+        body
+      })
+    }),
+
+    resetPassword: builder.mutation<ApiSuccessResponse<null>, ResetPasswordRequest>({
+      query: (body) => ({
+        url: routes.auth.resetPassword,
+        method: 'POST',
+        body
+      })
+    }),
+
     getCurrentUser: builder.query<ApiSuccessResponse<AuthUser>, void>({
       query: () => ({
         url: routes.auth.me,
@@ -58,5 +85,8 @@ export const {
   useLoginMutation,
   useRefreshMutation,
   useLogoutMutation,
-  useGetCurrentUserQuery
+  useGetCurrentUserQuery,
+  useChangePasswordMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation
 } = authApi;

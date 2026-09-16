@@ -11,23 +11,50 @@ type AccessTokenUser = {
 export type AccessTokenPayload = {
   sub: string;
   role: UserRole;
+  sessionVersion: number;
 };
 
-export const createAccessToken = ({ id, role }: AccessTokenUser): string => {
+export const createAccessToken = (
+  { id, role }: AccessTokenUser,
+  sessionVersion: number,
+): string => {
   return jwt.sign(
     {
       sub: id,
       role,
+      sessionVersion,
     },
     env.JWT_ACCESS_SECRET,
     {
+      algorithm: "HS256",
       expiresIn: env.JWT_ACCESS_TOKEN_TTL as jwt.SignOptions["expiresIn"],
     },
   );
 };
 
 export const verifyAccessToken = (token: string): AccessTokenPayload => {
-  return jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenPayload;
+  const payload = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+    algorithms: ["HS256"],
+  });
+
+  if (
+    typeof payload === "string" ||
+    typeof payload.sub !== "string" ||
+    !payload.sub ||
+    (payload.role !== "USER" && payload.role !== "ADMIN") ||
+    typeof payload.sessionVersion !== "number" ||
+    !Number.isSafeInteger(payload.sessionVersion) ||
+    payload.sessionVersion < 0 ||
+    typeof payload.exp !== "number"
+  ) {
+    throw new Error("Invalid access-token payload.");
+  }
+
+  return {
+    sub: payload.sub,
+    role: payload.role,
+    sessionVersion: payload.sessionVersion,
+  };
 };
 
 export const createRefreshToken = (): string => {

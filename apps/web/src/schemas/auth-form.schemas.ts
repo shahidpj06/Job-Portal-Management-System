@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { newPasswordSchema } from './password.schema';
 
 export const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email.'),
@@ -11,7 +12,7 @@ export const signupSchema = z
     email: z.string().trim().email('Please enter a valid email.'),
     firstName: z.string().trim().min(1, 'First name is required.'),
     lastName: z.string().trim().min(1, 'Last name is required.'),
-    password: z.string().min(8, 'Password must be at least 8 characters.')
+    password: newPasswordSchema
   })
   .refine((formData) => formData.password === formData.confirmPassword, {
     message: 'Passwords do not match.',

@@ -1,9 +1,5 @@
 import { z } from "zod";
-
-const passwordSchema = z
-  .string()
-  .min(8, "Password must be at least 8 characters long.")
-  .max(72, "Password must not exceed 72 characters.");
+import { newPasswordSchema } from "./password.schema.js";
 
 export const registerSchema = z.object({
   firstName: z
@@ -21,7 +17,7 @@ export const registerSchema = z.object({
     .trim()
     .email("Enter a valid email address.")
     .max(255, "Email must not exceed 255 characters."),
-  password: passwordSchema,
+  password: newPasswordSchema,
 });
 
 export const loginSchema = z.object({

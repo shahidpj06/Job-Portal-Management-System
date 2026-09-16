@@ -7,6 +7,7 @@ import { AdminProfilePage } from '@/views/admin/admin-profile-page';
 import { ApplicationsPage } from '@/views/candidate/applications-page';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ForgotPasswordPage } from '@/views/auth/forgot-password-page';
+import { ResetPasswordPage } from '@/views/auth/reset-password-page';
 import { HomePage } from '@/views/home/home-page';
 import { JobDetailPage } from '@/views/job-details/job-detail-page';
 import { JobsPage } from '@/views/jobs/jobs';
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: 'forgot-password',
         element: <ForgotPasswordPage />
+      },
+      {
+        path: 'reset-password',
+        element: <ResetPasswordPage />
       },
       {
         path: 'profile',

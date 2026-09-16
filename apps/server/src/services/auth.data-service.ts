@@ -3,6 +3,7 @@ import { UserRole } from "../generated/prisma/client.js";
 import { prisma } from "../database/index.js";
 import type { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import { ApiError } from "../tools/api-error.js";
+import type { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import {
   createAccessToken,
   createRefreshToken,
@@ -10,6 +11,7 @@ import {
   hashRefreshToken,
 } from "../tools/auth-token.helper.js";
 import type { AuthSession, AuthUser } from "../types/auth.js";
+import { ChangePasswordInput } from "../schemas/password.schema.js";
 
 const PASSWORD_SALT_ROUNDS = 12;
 
@@ -31,7 +33,8 @@ const toAuthUser = (user: {
 
 const createSession = async (
   user: AuthUser,
-  database = prisma,
+  sessionVersion: number,
+  database: Pick<Prisma.TransactionClient, "refreshToken"> = prisma,
 ): Promise<AuthSession> => {
   const refreshToken = createRefreshToken();
 
@@ -40,12 +43,13 @@ const createSession = async (
       userId: user.id,
       tokenHash: hashRefreshToken(refreshToken),
       expiresAt: getRefreshTokenExpiry(),
+      sessionVersion,
     },
   });
 
   return {
     user,
-    accessToken: createAccessToken(user),
+    accessToken: createAccessToken(user, sessionVersion),
     refreshToken,
   };
 };
@@ -101,7 +105,7 @@ export const AuthDataService = {
       },
     });
 
-    return createSession(toAuthUser(user), database);
+    return createSession(toAuthUser(user), user.sessionVersion, database);
   },
 
   login: async (input: LoginInput, database = prisma): Promise<AuthSession> => {
@@ -124,10 +128,14 @@ export const AuthDataService = {
       throw invalidCredentialsError();
     }
 
-    return createSession(toAuthUser(user), database);
+    return createSession(toAuthUser(user), user.sessionVersion, database);
   },
 
-  getById: async (userId: string, database = prisma): Promise<AuthUser> => {
+  getById: async (
+    userId: string,
+    sessionVersion: number,
+    database = prisma,
+  ): Promise<AuthUser> => {
     const user = await database.user.findUnique({
       where: { id: userId },
       select: {
@@ -136,51 +144,67 @@ export const AuthDataService = {
         lastName: true,
         email: true,
         role: true,
+        sessionVersion: true,
       },
     });
 
-    if (!user) {
+    if (!user || user.sessionVersion !== sessionVersion) {
       throw new ApiError({
-        statusCode: 404,
-        code: "USER_NOT_FOUND",
-        message: "User not found.",
+        statusCode: 401,
+        code: "SESSION_REVOKED",
+        message: "Your session has expired. Please sign in again.",
       });
     }
 
-    return user;
+    return toAuthUser(user);
   },
 
   refresh: async (
     refreshToken: string,
     database = prisma,
   ): Promise<AuthSession> => {
-    const storedRefreshToken = await database.refreshToken.findUnique({
-      where: {
-        tokenHash: hashRefreshToken(refreshToken),
-      },
-      include: {
-        user: true,
-      },
+    return database.$transaction(async (transaction) => {
+      const storedToken = await transaction.refreshToken.findUnique({
+        where: {
+          tokenHash: hashRefreshToken(refreshToken),
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      const now = new Date();
+
+      if (
+        !storedToken ||
+        storedToken.revokedAt ||
+        storedToken.expiresAt <= now ||
+        storedToken.sessionVersion !== storedToken.user.sessionVersion
+      ) {
+        throw invalidRefreshTokenError();
+      }
+
+      const consumed = await transaction.refreshToken.updateMany({
+        where: {
+          id: storedToken.id,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: {
+          revokedAt: now,
+        },
+      });
+
+      if (consumed.count !== 1) {
+        throw invalidRefreshTokenError();
+      }
+
+      return createSession(
+        toAuthUser(storedToken.user),
+        storedToken.sessionVersion,
+        transaction,
+      );
     });
-
-    if (
-      !storedRefreshToken ||
-      storedRefreshToken.revokedAt ||
-      storedRefreshToken.expiresAt <= new Date()
-    ) {
-      throw invalidRefreshTokenError();
-    }
-
-    await database.refreshToken.update({
-      where: {
-        id: storedRefreshToken.id,
-      },
-      data: {
-        revokedAt: new Date(),
-      },
-    });
-
-    return createSession(toAuthUser(storedRefreshToken.user), database);
   },
 
   logout: async (refreshToken: string, database = prisma): Promise<void> => {
@@ -205,6 +229,99 @@ export const AuthDataService = {
       data: {
         revokedAt: new Date(),
       },
+    });
+  },
+
+  changePassword: async (
+    userId: string,
+    input: ChangePasswordInput,
+    database: PrismaClient = prisma,
+  ): Promise<void> => {
+    const user = await database.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        passwordHash: true,
+        sessionVersion: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError({
+        statusCode: 401,
+        code: "AUTHENTICATION_REQUIRED",
+        message: "Please sign in again.",
+      });
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      input.currentPassword,
+      user.passwordHash,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new ApiError({
+        statusCode: 400,
+        code: "CURRENT_PASSWORD_INCORRECT",
+        message: "Your current password is incorrect.",
+      });
+    }
+
+    const isSamePassword = await bcrypt.compare(
+      input.newPassword,
+      user.passwordHash,
+    );
+
+    if (isSamePassword) {
+      throw new ApiError({
+        statusCode: 400,
+        code: "PASSWORD_UNCHANGED",
+        message: "Choose a password different from your current password.",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(
+      input.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
+
+    await database.$transaction(async (transaction) => {
+      const updated = await transaction.user.updateMany({
+        where: {
+          id: user.id,
+          passwordHash: user.passwordHash,
+          sessionVersion: user.sessionVersion,
+        },
+        data: {
+          passwordHash,
+          sessionVersion: { increment: 1 },
+        },
+      });
+
+      if (updated.count !== 1) {
+        throw new ApiError({
+          statusCode: 409,
+          code: "PASSWORD_CHANGE_CONFLICT",
+          message:
+            "Your account credentials changed during this request. Please sign in again.",
+        });
+      }
+
+      await transaction.refreshToken.updateMany({
+        where: {
+          userId: user.id,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      });
+
+      await transaction.passwordResetToken.deleteMany({
+        where: {
+          userId: user.id,
+        },
+      });
     });
   },
 };

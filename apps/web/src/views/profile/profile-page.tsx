@@ -24,6 +24,7 @@ import { paths } from '@/utils/paths';
 import { ProfileDetailsForm } from './components/profile-details-form';
 import { ProfileFilesForm } from './components/profile-files-form';
 import { ProfileSidebar } from './components/profile-sidebar';
+import { ChangePassword } from '@/components/auth/change-password';
 
 export const ProfilePage = () => {
   const { user } = useAuthSession();
@@ -244,6 +245,8 @@ export const ProfilePage = () => {
                   files={profile.profileFiles}
                   onUploadResume={onUploadResume}
                 />
+
+                {activeTab === 'settings' && <ChangePassword />}
               </div>
             </TabsContent>
           </Tabs>
