@@ -7,16 +7,21 @@ import { paths } from '@/utils/paths';
 
 import { ValuePointItem } from './value-point-item';
 
-type Milestone = ComponentProps<typeof CareerProgressVisual>['milestones'][number];
+type CareerMilestone = ComponentProps<typeof CareerProgressVisual>['milestones'][number];
 
-interface WhyChooseSectionProps {
+interface PlatformBenefitsSectionProps {
   appName: string;
+  benefits: string[];
   isAuthenticated?: boolean;
-  milestones: Milestone[];
-  points: string[];
+  milestones: CareerMilestone[];
 }
 
-export const WhyChooseSection = ({ appName, isAuthenticated, milestones, points }: WhyChooseSectionProps) => (
+export const PlatformBenefitsSection = ({
+  appName,
+  benefits,
+  isAuthenticated,
+  milestones
+}: PlatformBenefitsSectionProps) => (
   <section className='border-t border-border/80 px-4 py-16 md:py-24'>
     <div className='mx-auto max-w-[1200px]'>
       <div className='grid gap-12 lg:grid-cols-2 lg:items-center'>
@@ -33,17 +38,17 @@ export const WhyChooseSection = ({ appName, isAuthenticated, milestones, points 
           </div>
 
           <ul className='space-y-3.5'>
-            {points.map((point) => (
-              <ValuePointItem key={point} text={point} />
+            {benefits.map((benefit) => (
+              <ValuePointItem key={benefit} text={benefit} />
             ))}
           </ul>
 
           {!isAuthenticated && (
             <div className='pt-2'>
               <Button
-                size='lg'
                 asChild
                 className='rounded-xl bg-primary px-7 font-semibold text-primary-foreground shadow-sm hover:bg-primary/90'
+                size='lg'
               >
                 <Link to={paths.auth['sign-up']}>Get Started Free</Link>
               </Button>
@@ -58,4 +63,3 @@ export const WhyChooseSection = ({ appName, isAuthenticated, milestones, points 
     </div>
   </section>
 );
-

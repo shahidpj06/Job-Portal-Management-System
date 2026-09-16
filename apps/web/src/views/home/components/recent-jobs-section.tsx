@@ -1,37 +1,44 @@
 import { ArrowRight, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { JobCard } from '@/views/jobs/components/job-card';
+import type { IJobData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { paths } from '@/utils/paths';
-import type { IJobData } from '@/types';
+import { JobCard } from '@/views/jobs/components/job-card';
+
 import { SectionHeading } from './section-heading';
 
+const RECENT_JOBS_SKELETON_KEYS = [
+  'recent-job-skeleton-1',
+  'recent-job-skeleton-2',
+  'recent-job-skeleton-3',
+  'recent-job-skeleton-4',
+  'recent-job-skeleton-5',
+  'recent-job-skeleton-6'
+];
+
 interface RecentJobsSectionProps {
-  jobs: IJobData[];
-  isLoading?: boolean;
   isError?: boolean;
+  isLoading?: boolean;
+  jobs: IJobData[];
   onApply: (jobId: string) => void;
 }
 
 export const RecentJobsSection = ({
-  jobs,
-  isLoading,
   isError,
+  isLoading,
+  jobs,
   onApply
 }: RecentJobsSectionProps) => (
   <section className='border-t border-border/80 bg-muted/30 px-4 py-16 md:py-20'>
     <div className='mx-auto max-w-[1200px]'>
       <SectionHeading
-        eyebrow='Latest Opportunities'
-        title='Recent Jobs'
-        description='Explore the newest job openings from verified hiring companies'
         action={
           <Button
-            variant='outline'
-            size='sm'
             asChild
             className='self-start rounded-xl border-border font-semibold hover:bg-muted sm:self-auto'
+            size='sm'
+            variant='outline'
           >
             <Link to={paths.jobs}>
               <span>Browse all jobs</span>
@@ -39,13 +46,16 @@ export const RecentJobsSection = ({
             </Link>
           </Button>
         }
+        description='Explore the newest job openings from verified hiring companies'
+        eyebrow='Latest Opportunities'
+        title='Recent Jobs'
       />
 
       {isLoading ? (
         <div className='grid gap-4'>
-          {Array.from({ length: 6 }).map((_, i) => (
+          {RECENT_JOBS_SKELETON_KEYS.map((skeletonKey) => (
             <div
-              key={i}
+              key={skeletonKey}
               className='h-48 animate-pulse rounded-2xl border border-border/60 bg-card p-5'
             />
           ))}
@@ -69,9 +79,9 @@ export const RecentJobsSection = ({
 
       <div className='mt-10 text-center'>
         <Button
-          size='lg'
           asChild
           className='rounded-xl bg-primary px-6 font-semibold text-primary-foreground shadow-sm hover:bg-primary/90'
+          size='lg'
         >
           <Link to={paths.jobs}>
             <span>View All Jobs</span>

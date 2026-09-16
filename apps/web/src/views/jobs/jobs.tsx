@@ -1,6 +1,6 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useId, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { EmptyState, ErrorState, LoadingState } from '@/components/common';
 import { ResultsPagination } from '@/components/pagination/pagination';
@@ -17,314 +17,123 @@ import { useListPublicJobsQuery } from '@/services/job';
 import { paths } from '@/utils/paths';
 
 import { JobCard } from './components/job-card';
-import { JobsActiveFilters, type JobsActiveFilter } from './components/jobs-active-filters';
+import { JobsActiveFilters } from './components/jobs-active-filters';
 import { JobsFilters } from './components/jobs-filters';
-import {
-  CATEGORY_OPTIONS,
-  DATE_POSTED_OPTIONS,
-  EMPLOYMENT_OPTIONS,
-  EXPERIENCE_OPTIONS,
-  SORT_OPTIONS,
-  WORK_MODE_OPTIONS,
-  readPublicJobsQuery
-} from './components/jobs-query';
+import { SORT_OPTIONS } from './components/jobs-query';
 import { JobsSearchHeader } from './components/jobs-search-header';
+import { useJobsQuery } from './hooks/use-jobs-query';
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_SORT = 'newest';
 
 export const JobsPage = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [areFiltersOpen, setAreFiltersOpen] = useState(false);
   const [searchResetKey, setSearchResetKey] = useState(0);
 
   const filterPanelId = useId();
+  const resultsHeadingReference = useRef<HTMLHeadingElement>(null);
   const sortId = useId();
-  const resultsHeadingRef = useRef<HTMLHeadingElement>(null);
-
-  const query = useMemo(() => {
-    return readPublicJobsQuery(searchParams);
-  }, [searchParams]);
-
-  const salaryScopeEnabled = useMemo(() => {
-    return query.minSalary !== undefined || query.sort === 'highest_salary';
-  }, [query.minSalary, query.sort]);
-
-  const queryArguments = useMemo(() => {
-    return {
-      ...query,
-      currency: salaryScopeEnabled ? query.currency : undefined
-    };
-  }, [query, salaryScopeEnabled]);
 
   const {
-    currentData: jobsResponse,
+    activeFilters,
+    handleFilterChange,
+    handleFilterRemove,
+    handleFiltersReset,
+    handleFilterToggle,
+    handleSearch,
+    handleSortChange,
+    query,
+    queryArguments,
+    sortLabel,
+    updateSearchParameters
+  } = useJobsQuery();
+
+  const {
+    currentData: publicJobsResponse,
     error,
     isError,
     isFetching,
     refetch
   } = useListPublicJobsQuery(queryArguments);
 
-  const jobs = jobsResponse?.data.items;
-  const pagination = jobsResponse?.data.pagination;
-  const currentPage = query.page ?? 1;
+  const currentPage = query.page ?? DEFAULT_PAGE;
+  const jobs = publicJobsResponse?.data.items;
+  const pagination = publicJobsResponse?.data.pagination;
 
-  const activeFilters = useMemo(() => {
-    const filters: JobsActiveFilter[] = [];
+  const handleFiltersToggle = () => {
+    setAreFiltersOpen((areCurrentlyOpen) => !areCurrentlyOpen);
+  };
 
-    if (query.search) {
-      filters.push({
-        id: 'search',
-        field: 'q',
-        label: query.search
-      });
-    }
+  const handleJobsApply = (jobId: string) => {
+    navigate(paths['job-details'](jobId));
 
-    if (query.location) {
-      filters.push({
-        id: 'location',
-        field: 'location',
-        label: query.location
-      });
-    }
+    window.scrollTo({
+      behavior: 'instant',
+      top: 0
+    });
+  };
 
-    const singleFilters = [
-      {
-        field: 'category',
-        value: query.category,
-        options: CATEGORY_OPTIONS
-      },
-      {
-        field: 'workMode',
-        value: query.workMode,
-        options: WORK_MODE_OPTIONS
-      },
-      {
-        field: 'datePosted',
-        value: query.datePosted,
-        options: DATE_POSTED_OPTIONS
-      }
-    ];
-
-    singleFilters.forEach((filter) => {
-      const option = filter.options.find((item) => item.value === filter.value);
-
-      if (option) {
-        filters.push({
-          id: filter.field,
-          field: filter.field,
-          label: option.label
-        });
-      }
+  const handlePageChange = (page: number) => {
+    updateSearchParameters({
+      page: String(page)
     });
 
-    EMPLOYMENT_OPTIONS.forEach((option) => {
-      if (query.employmentType?.includes(option.value)) {
-        filters.push({
-          id: `employment-${option.value}`,
-          field: 'employmentType',
-          value: option.value,
-          label: option.label
-        });
-      }
+    resultsHeadingReference.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
     });
+  };
 
-    EXPERIENCE_OPTIONS.forEach((option) => {
-      if (query.experienceLevel?.includes(option.value)) {
-        filters.push({
-          id: `experience-${option.value}`,
-          field: 'experienceLevel',
-          value: option.value,
-          label: option.label
-        });
-      }
-    });
-
-    if (query.minSalary !== undefined) {
-      filters.push({
-        id: 'salary',
-        field: 'minSalary',
-        label: `Salary target: ${query.minSalary.toLocaleString()}+`
-      });
-    }
-
-    if (salaryScopeEnabled) {
-      filters.push({
-        id: 'salary-currency',
-        field: 'salaryCurrency',
-        label: `Currency: ${query.currency ?? 'USD'}`
-      });
-    }
-
-    return filters;
-  }, [query, salaryScopeEnabled]);
-
-  const sortLabel = useMemo(() => {
-    const label = SORT_OPTIONS.find((option) => option.value === query.sort)?.label;
-
-    return query.sort === 'highest_salary' ? `${label} (${query.currency ?? 'USD'})` : label;
-  }, [query.sort, query.currency]);
-
-  const updateParams = useCallback(
-    (updates: Record<string, string | null>) => {
-      setSearchParams((currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
-
-        Object.entries(updates).forEach(([key, value]) => {
-          if (value === null || value === '' || value === 'all') {
-            nextParams.delete(key);
-          } else {
-            nextParams.set(key, value);
-          }
-        });
-
-        if (!Object.prototype.hasOwnProperty.call(updates, 'page')) {
-          nextParams.delete('page');
-        }
-
-        if (Object.prototype.hasOwnProperty.call(updates, 'experienceLevel')) {
-          nextParams.delete('seniority');
-        }
-
-        return nextParams;
-      });
-    },
-    [setSearchParams]
-  );
-
-  const onSearch = useCallback(
-    (keyword: string, location: string) => {
-      const normalizedLocation = location.trim();
-      const isRemoteSearch = normalizedLocation.toLowerCase() === 'remote';
-
-      updateParams({
-        q: keyword.trim().slice(0, 100),
-        location: isRemoteSearch ? null : normalizedLocation.slice(0, 100),
-        ...(isRemoteSearch ? { workMode: 'REMOTE' } : {})
-      });
-    },
-    [updateParams]
-  );
-
-  const onFilterChange = useCallback(
-    (key: string, value: string) => {
-      updateParams({ [key]: value });
-    },
-    [updateParams]
-  );
-
-  const onToggleFilter = useCallback(
-    (key: 'employmentType' | 'experienceLevel', value: string) => {
-      const selected = new Set<string>(query[key] ?? []);
-
-      if (selected.has(value)) {
-        selected.delete(value);
-      } else {
-        selected.add(value);
-      }
-
-      updateParams({ [key]: [...selected].join(',') });
-    },
-    [query, updateParams]
-  );
-
-  const onRemoveFilter = useCallback(
-    (filter: JobsActiveFilter) => {
-      if (
-        (filter.field === 'employmentType' || filter.field === 'experienceLevel') &&
-        filter.value
-      ) {
-        onToggleFilter(filter.field, filter.value);
-        return;
-      }
-
-      if (filter.field === 'salaryCurrency') {
-        updateParams({
-          currency: null,
-          minSalary: null,
-          sort: 'newest'
-        });
-        return;
-      }
-
-      updateParams({ [filter.field]: null });
-    },
-    [onToggleFilter, updateParams]
-  );
-
-  const onResetFilters = useCallback(() => {
-    setSearchParams(new URLSearchParams());
-    setSearchResetKey((value) => value + 1);
-  }, [setSearchParams]);
-
-  const onToggleFilters = useCallback(() => {
-    setFiltersOpen((value) => !value);
-  }, []);
-
-  const onSortChange = useCallback(
-    (value: string) => {
-      updateParams({ sort: value });
-    },
-    [updateParams]
-  );
-
-  const onPageChange = useCallback(
-    (page: number) => {
-      updateParams({ page: String(page) });
-      resultsHeadingRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    },
-    [updateParams]
-  );
-
-  const onFirstPage = useCallback(() => {
-    onPageChange(1);
-  }, [onPageChange]);
-
-  const onRetry = useCallback(() => {
+  const handleRetry = () => {
     void refetch();
-  }, [refetch]);
+  };
 
-  const onApply = useCallback(
-    (jobId: string) => {
-      navigate(paths['job-details'](jobId));
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    },
-    [navigate]
-  );
+  const handleReset = () => {
+    handleFiltersReset();
+    setSearchResetKey((currentKey) => currentKey + 1);
+  };
+
+  const handleFirstPage = () => {
+    handlePageChange(DEFAULT_PAGE);
+  };
 
   return (
     <div className='min-h-screen bg-primary/[0.025]'>
       <JobsSearchHeader
         key={JSON.stringify([query.search, query.location, searchResetKey])}
-        initialQuery={query.search ?? ''}
-        initialLocation={query.location ?? ''}
         activeFilterCount={activeFilters.length}
-        filtersOpen={filtersOpen}
         filterPanelId={filterPanelId}
-        onSearch={onSearch}
-        onToggleFilters={onToggleFilters}
+        filtersOpen={areFiltersOpen}
+        initialLocation={query.location ?? ''}
+        initialQuery={query.search ?? ''}
+        onSearch={handleSearch}
+        onToggleFilters={handleFiltersToggle}
       />
 
       <section className='mx-auto max-w-[1200px] px-4 py-8 md:px-8'>
         <div className='grid grid-cols-1 items-start gap-5 md:grid-cols-[240px_minmax(0,1fr)] md:gap-6'>
           <div className='order-1 flex flex-wrap items-center justify-between gap-3 md:order-none md:col-span-2 md:row-start-1'>
-            <h2 ref={resultsHeadingRef} className='scroll-mt-24 text-sm font-semibold md:text-base'>
+            <h2
+              ref={resultsHeadingReference}
+              className='scroll-mt-24 text-sm font-semibold md:text-base'
+            >
               {pagination
                 ? `Showing ${pagination.totalItems.toLocaleString()} open jobs`
                 : 'Find open jobs'}
             </h2>
 
             <div className='flex items-center gap-2'>
-              <label htmlFor={sortId} className='hidden text-xs text-muted-foreground md:block'>
+              <label className='hidden text-xs text-muted-foreground md:block' htmlFor={sortId}>
                 Sort by:
               </label>
 
-              <Select value={query.sort ?? 'newest'} onValueChange={onSortChange}>
+              <Select onValueChange={handleSortChange} value={query.sort ?? DEFAULT_SORT}>
                 <SelectTrigger
-                  id={sortId}
                   aria-label='Sort jobs'
                   className='h-9 min-w-36 rounded-lg border-0 bg-surface text-xs shadow-sm'
+                  id={sortId}
                 >
                   <SelectValue>{sortLabel}</SelectValue>
                 </SelectTrigger>
@@ -345,48 +154,49 @@ export const JobsPage = () => {
             className='order-3 hidden min-w-0 md:order-none md:col-start-1 md:row-start-2 md:block'
           >
             <JobsFilters
+              onChange={handleFilterChange}
+              onReset={handleReset}
+              onToggle={handleFilterToggle}
               query={query}
-              onChange={onFilterChange}
-              onToggle={onToggleFilter}
-              onReset={onResetFilters}
             />
           </aside>
 
-          {filtersOpen && (
+          {areFiltersOpen && (
             <div className='fixed inset-0 z-50 md:hidden'>
               <div
-                className='absolute inset-0 bg-black/40'
-                onClick={onToggleFilters}
                 aria-hidden='true'
+                className='absolute inset-0 bg-black/40'
+                onClick={handleFiltersToggle}
               />
 
               <div
+                aria-label='Job filters'
+                aria-modal='true'
+                className='absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-xl'
                 id={filterPanelId}
                 role='dialog'
-                aria-modal='true'
-                aria-label='Job filters'
-                className='absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-xl'
               >
                 <div className='mb-3 flex items-center justify-between'>
                   <h3 className='text-sm font-semibold'>Filters</h3>
+
                   <button
-                    type='button'
-                    onClick={onToggleFilters}
                     aria-label='Close filters'
                     className='rounded-full p-1 text-muted-foreground hover:bg-muted'
+                    onClick={handleFiltersToggle}
+                    type='button'
                   >
                     <X className='h-5 w-5' />
                   </button>
                 </div>
 
                 <JobsFilters
+                  onChange={handleFilterChange}
+                  onReset={handleReset}
+                  onToggle={handleFilterToggle}
                   query={query}
-                  onChange={onFilterChange}
-                  onToggle={onToggleFilter}
-                  onReset={onResetFilters}
                 />
 
-                <Button className='mt-4 w-full' onClick={onToggleFilters}>
+                <Button className='mt-4 w-full' onClick={handleFiltersToggle}>
                   Show results
                 </Button>
               </div>
@@ -396,62 +206,63 @@ export const JobsPage = () => {
           <div className='order-2 min-w-0 space-y-4 md:order-none md:col-start-2 md:row-start-2'>
             <JobsActiveFilters
               filters={activeFilters}
-              onRemove={onRemoveFilter}
-              onReset={onResetFilters}
+              onRemove={handleFilterRemove}
+              onReset={handleReset}
             />
 
-            <div className='space-y-4' aria-busy={isFetching}>
+            <div aria-busy={isFetching} className='space-y-4'>
               {isFetching && (
-                <p role='status' className='text-xs text-muted-foreground'>
+                <p className='text-xs text-muted-foreground' role='status'>
                   Updating job results…
                 </p>
               )}
 
-              {!jobsResponse && isFetching && <LoadingState />}
+              {!publicJobsResponse && isFetching && <LoadingState />}
 
               {isError && (
                 <ErrorState
-                  title='Unable to load jobs'
                   description={getApiErrorMessage(
                     error,
                     'Please try again. Your selected filters have been kept.'
                   )}
-                  onRetry={onRetry}
+                  onRetry={handleRetry}
+                  title='Unable to load jobs'
                 />
               )}
 
               {!isError && jobs?.length === 0 && (
                 <EmptyState
-                  title={currentPage > 1 ? 'No jobs on this page' : 'No matching jobs'}
+                  action={
+                    <Button
+                      onClick={currentPage > DEFAULT_PAGE ? handleFirstPage : handleReset}
+                      variant='outline'
+                    >
+                      {currentPage > DEFAULT_PAGE ? 'First page' : 'Clear filters'}
+                    </Button>
+                  }
                   description={
-                    currentPage > 1
+                    currentPage > DEFAULT_PAGE
                       ? 'The results may have changed. Return to the first page.'
                       : 'Try another search or clear your filters.'
                   }
-                  action={
-                    <Button
-                      variant='outline'
-                      onClick={currentPage > 1 ? onFirstPage : onResetFilters}
-                    >
-                      {currentPage > 1 ? 'First page' : 'Clear filters'}
-                    </Button>
-                  }
+                  title={currentPage > DEFAULT_PAGE ? 'No jobs on this page' : 'No matching jobs'}
                 />
               )}
 
-              {!isError && jobs?.map((job) => <JobCard key={job.id} job={job} onApply={onApply} />)}
+              {!isError &&
+                jobs?.map((job) => <JobCard key={job.id} job={job} onApply={handleJobsApply} />)}
 
               {!isError &&
                 pagination &&
                 pagination.totalPages > 0 &&
                 pagination.page <= pagination.totalPages && (
                   <ResultsPagination
+                    disabled={isFetching}
+                    itemLabel='roles'
+                    onPageChange={handlePageChange}
                     page={pagination.page}
                     pageCount={pagination.totalPages}
                     totalItems={pagination.totalItems}
-                    itemLabel='roles'
-                    disabled={isFetching}
-                    onPageChange={onPageChange}
                   />
                 )}
             </div>
