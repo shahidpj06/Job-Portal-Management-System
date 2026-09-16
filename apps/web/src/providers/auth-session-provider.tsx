@@ -1,6 +1,6 @@
 import { type PropsWithChildren, useCallback, useEffect, useRef } from 'react';
 
-import { clearSession, setSession, useRefreshMutation } from '@/services/auth';
+import { clearSession, hasSavedSession, setSession, useRefreshMutation } from '@/services/auth';
 import { useAppDispatch } from '@/services/hooks';
 
 export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
@@ -24,6 +24,11 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
     }
 
     hasRestoredSession.current = true;
+
+    if (!hasSavedSession()) {
+      return;
+    }
+
     void restoreSession();
   }, [restoreSession]);
 

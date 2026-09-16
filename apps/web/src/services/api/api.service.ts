@@ -8,6 +8,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 
 import { clearSession, setSession } from '@/services/auth/auth.slice';
+import { hasSavedSession } from '@/services/auth/session-storage';
 import type { RootState } from '@/services/store';
 import type { ApiSuccessResponse, AuthSession } from '@/types';
 import { APP_CONFIG } from '@/utils/global-config';
@@ -76,6 +77,10 @@ const baseQueryWithReauth: BaseQueryFn<QueryArgs, unknown, FetchBaseQueryError> 
   const isAuthLifecycleRequest = authLifecycleRoutes.has(getRequestUrl(args));
 
   if (isUnauthorized && !isAuthLifecycleRequest) {
+    if (!hasSavedSession()) {
+      return result;
+    }
+
     if (!refreshSessionPromise) {
       refreshSessionPromise = refreshSession(api, extraOptions).finally(() => {
         refreshSessionPromise = null;
