@@ -27,7 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Briefcase
 };
 
-export function CategoryCard({ category, className = '' }: CategoryCardProps) {
+export const CategoryCard = ({ category, className = '' }: CategoryCardProps) => {
   const IconComponent = (category.icon && ICON_MAP[category.icon]) || Briefcase;
 
   return (
@@ -58,4 +58,4 @@ export function CategoryCard({ category, className = '' }: CategoryCardProps) {
       )}
     </Link>
   );
-}
+};

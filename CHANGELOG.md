@@ -40,3 +40,5 @@ The Job Portal App Changes - used Jira for tracking the project
   [IMPROVEMENT] App: Make the Form Fields reusable and Refactor the Auth UI
 - [JBM-14](https://shahidpj06.atlassian.net/browse/JBM-14)
   [IMPROVEMENT] App: Refactor the Jobs Admin UI
+- [JBM-22](https://shahidpj06.atlassian.net/browse/JBM-22)
+  [IMPROVEMENT] App: Improve the Home Page UI and Remove Mock Data
