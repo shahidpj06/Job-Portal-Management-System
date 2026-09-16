@@ -10,7 +10,9 @@ export const routes = {
     },
     applications: {
       root: 'admin/applications',
-      byId: (applicationId: string) => `admin/applications/${encodeURIComponent(applicationId)}`
+      byId: (applicationId: string) => `admin/applications/${encodeURIComponent(applicationId)}`,
+      statusById: (applicationId: string) =>
+        `admin/applications/${encodeURIComponent(applicationId)}/status`
     },
     dashboard: {
       summary: 'admin/dashboard/summary'

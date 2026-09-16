@@ -47,6 +47,23 @@ export const applicationIdParamsSchema = z
   })
   .strict();
 
+export const updateApplicationStatusSchema = z
+  .object({
+    status: z.enum([
+      "SUBMITTED",
+      "REVIEWING",
+      "INTERVIEWING",
+      "OFFER",
+      "REJECTED",
+      "HIRED",
+    ]),
+  })
+  .strict();
+
+export type UpdateApplicationStatusInput = z.infer<
+  typeof updateApplicationStatusSchema
+>;
+
 export type ListCandidateApplicationsQuery = z.infer<
   typeof listCandidateApplicationsQuerySchema
 >;

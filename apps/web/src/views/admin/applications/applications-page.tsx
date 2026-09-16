@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/common';
 import { ResultsPagination } from '@/components/pagination/pagination';
@@ -9,10 +10,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getApiErrorMessage } from '@/services/api/get-api-error-message';
 import {
   useGetAdminApplicationDetailsQuery,
-  useListAdminApplicationsQuery
+  useListAdminApplicationsQuery,
+  useUpdateApplicationStatusMutation
 } from '@/services/application/application.api';
 import { useAuthSession } from '@/services/auth';
-import type { IApplicationDetailsArguments } from '@/types/application';
+import type { ApplicationStatus, IApplicationDetailsArguments } from '@/types/application';
 import { paths } from '@/utils/paths';
 
 import { ApplicationDetailsDialog } from './components/application-details-dialog';
@@ -29,6 +31,9 @@ export const AdminApplicationsPage = () => {
   const [resumeMessage, setResumeMessage] = useState('');
   const [selectedApplication, setSelectedApplication] =
     useState<IApplicationDetailsArguments | null>(null);
+
+  const [updateApplicationStatus, { isLoading: isUpdatingStatus }] =
+    useUpdateApplicationStatusMutation();
 
   const jobId = searchParameters.get('jobId') || undefined;
   const viewerId = isAuthenticated && user?.role === ADMIN_ROLE ? user.id : undefined;
@@ -212,6 +217,20 @@ export const AdminApplicationsPage = () => {
     [viewerId]
   );
 
+  const handleUpdateStatus = useCallback(
+    (applicationId: string, status: ApplicationStatus) => {
+      void updateApplicationStatus({ applicationId, status })
+        .unwrap()
+        .then(() => {
+          toast.success('Application status updated successfully.');
+        })
+        .catch((error: unknown) => {
+          toast.error(getApiErrorMessage(error));
+        });
+    },
+    [updateApplicationStatus]
+  );
+
   return (
     <div className='space-y-5 p-4 md:p-6'>
       <PageHeader description={description} title='Applications' />
@@ -286,9 +305,11 @@ export const AdminApplicationsPage = () => {
         application={isApplicationDetailsOpen ? application : undefined}
         errorMessage={applicationDetailsErrorMessage}
         isLoading={isFetchingApplicationDetails}
+        isUpdatingStatus={isUpdatingStatus}
         onClose={handleApplicationDetailsClose}
         onResumeClick={handleResumeClick}
         onRetry={handleApplicationDetailsRetry}
+        onUpdateStatus={handleUpdateStatus}
         open={isApplicationDetailsOpen}
         resumeMessage={resumeMessage}
       />
