@@ -2,6 +2,8 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import type { AuthSession, AuthUser } from '@/types';
 
+import { clearSavedSession, hasSavedSession, markSavedSession } from './session-storage';
+
 export type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
 
 interface AuthState {
@@ -12,7 +14,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   accessToken: null,
-  status: 'checking',
+  status: hasSavedSession() ? 'checking' : 'unauthenticated',
   user: null
 };
 
@@ -24,12 +26,14 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.status = 'unauthenticated';
       state.user = null;
+      clearSavedSession();
     },
 
     setSession: (state, action: PayloadAction<AuthSession>) => {
       state.accessToken = action.payload.accessToken;
       state.status = 'authenticated';
       state.user = action.payload.user;
+      markSavedSession();
     },
 
     updateSessionProfile: (

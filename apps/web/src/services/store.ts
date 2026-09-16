@@ -22,11 +22,18 @@ const startSessionListening = sessionListener.startListening.withTypes<RootState
 startSessionListening({
   matcher: isAnyOf(clearSession, setSession),
   effect: (action, listenerApi) => {
-    const previousUserId = listenerApi.getOriginalState().auth.user?.id;
+    const previousAuth = listenerApi.getOriginalState().auth;
+    const currentAuth = listenerApi.getState().auth;
+    const hadSession = Boolean(previousAuth.accessToken || previousAuth.user);
 
-    const currentUserId = listenerApi.getState().auth.user?.id;
+    if (clearSession.match(action)) {
+      if (hadSession) {
+        listenerApi.dispatch(apiService.util.resetApiState());
+      }
+      return;
+    }
 
-    if (clearSession.match(action) || previousUserId !== currentUserId) {
+    if (previousAuth.user?.id !== currentAuth.user?.id && hadSession) {
       listenerApi.dispatch(apiService.util.resetApiState());
     }
   }
