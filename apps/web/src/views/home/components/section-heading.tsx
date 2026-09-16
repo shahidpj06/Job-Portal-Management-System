@@ -11,9 +11,7 @@ export const SectionHeading = ({ eyebrow, title, description, action }: SectionH
   <div className='mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
     <div>
       {eyebrow && (
-        <p className='mb-1 text-xs font-semibold uppercase tracking-wide text-primary'>
-          {eyebrow}
-        </p>
+        <p className='mb-1 text-xs font-semibold uppercase tracking-wide text-primary'>{eyebrow}</p>
       )}
 
       <h2 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>{title}</h2>

@@ -1,33 +1,44 @@
-import { useCallback, useState, type FormEvent } from 'react';
 import { ArrowRight, MapPin, SlidersHorizontal } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
 
 import { SearchInput } from '@/components/search/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+const MAXIMUM_SEARCH_LENGTH = 100;
+
 interface JobsSearchHeaderProps {
-  initialQuery: string;
-  initialLocation: string;
   activeFilterCount: number;
-  filtersOpen: boolean;
   filterPanelId: string;
+  filtersOpen: boolean;
+  initialLocation: string;
+  initialQuery: string;
   onSearch: (query: string, location: string) => void;
   onToggleFilters: () => void;
 }
 
-export const JobsSearchHeader = (props: JobsSearchHeaderProps) => {
-  const [query, setQuery] = useState(props.initialQuery);
-  const [location, setLocation] = useState(props.initialLocation);
+export const JobsSearchHeader = ({
+  activeFilterCount,
+  filterPanelId,
+  filtersOpen,
+  initialLocation,
+  initialQuery,
+  onSearch,
+  onToggleFilters
+}: JobsSearchHeaderProps) => {
+  const [location, setLocation] = useState(initialLocation);
+  const [query, setQuery] = useState(initialQuery);
 
-  const onSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const handleLocationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLocation(event.target.value);
+  };
 
-      props.onSearch(query.trim(), location.trim());
-    },
-    [props.onSearch, query, location]
-  );
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    onSearch(query.trim(), location.trim());
+  };
 
   return (
     <section className='border-b border-primary/5 bg-primary/[0.035]'>
@@ -48,19 +59,19 @@ export const JobsSearchHeader = (props: JobsSearchHeaderProps) => {
         </div>
 
         <form
-          role='search'
           aria-label='Search job listings'
-          onSubmit={onSubmit}
           className='grid grid-cols-2 gap-2 rounded-xl bg-surface p-2.5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'
+          onSubmit={handleSearchSubmit}
+          role='search'
         >
           <SearchInput
-            value={query}
-            onValueChange={setQuery}
-            maxLength={100}
-            placeholder='Job title or company'
             aria-label='Job title or company'
-            wrapperClassName='col-span-2 min-w-0 md:col-span-1'
             className='h-11 rounded-lg border-0 bg-primary/5 text-sm shadow-none'
+            maxLength={MAXIMUM_SEARCH_LENGTH}
+            onValueChange={setQuery}
+            placeholder='Job title or company'
+            value={query}
+            wrapperClassName='col-span-2 min-w-0 md:col-span-1'
           />
 
           <div className='relative col-span-2 min-w-0 md:col-span-1'>
@@ -70,33 +81,33 @@ export const JobsSearchHeader = (props: JobsSearchHeaderProps) => {
             />
 
             <Input
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              maxLength={100}
-              placeholder='City, country or Remote'
               aria-label='Job location'
               className='h-11 rounded-lg border-0 bg-primary/5 pl-9 text-sm shadow-none'
+              maxLength={MAXIMUM_SEARCH_LENGTH}
+              onChange={handleLocationChange}
+              placeholder='City, country or Remote'
+              value={location}
             />
           </div>
 
           <Button
+            aria-controls={filterPanelId}
+            aria-expanded={filtersOpen}
+            className='h-11 rounded-lg bg-primary/10 text-muted-background md:hidden'
+            onClick={onToggleFilters}
             type='button'
             variant='secondary'
-            onClick={props.onToggleFilters}
-            aria-expanded={props.filtersOpen}
-            aria-controls={props.filterPanelId}
-            className='h-11 rounded-lg bg-primary/10 text-muted-background md:hidden'
           >
             <SlidersHorizontal aria-hidden='true' className='size-4' />
             Filters
-            {props.activeFilterCount > 0 && (
+            {activeFilterCount > 0 && (
               <Badge className='h-5 min-w-5 justify-center px-1 text-[10px]'>
-                {props.activeFilterCount}
+                {activeFilterCount}
               </Badge>
             )}
           </Button>
 
-          <Button type='submit' className='h-11 rounded-lg px-6'>
+          <Button className='h-11 rounded-lg px-6' type='submit'>
             Search Jobs
             <ArrowRight aria-hidden='true' className='size-4' />
           </Button>

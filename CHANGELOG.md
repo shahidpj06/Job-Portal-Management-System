@@ -44,3 +44,5 @@ The Job Portal App Changes - used Jira for tracking the project
   [IMPROVEMENT] App: Improve the Home Page UI and Remove Mock Data
 - [JBM-23](https://shahidpj06.atlassian.net/browse/JBM-23)
   [IMPROVEMENT] App: Auth UI and Code Quality
+- [JBM-24](https://shahidpj06.atlassian.net/browse/JBM-24)
+  [IMPROVEMENT] App: Home and Landing page UI and Code Quality
