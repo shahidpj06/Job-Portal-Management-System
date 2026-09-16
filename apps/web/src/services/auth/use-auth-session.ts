@@ -17,7 +17,7 @@ export const useAuthSession = () => {
   const login = useCallback(
     async (input: LoginRequest) => {
       const response = await loginRequest(input).unwrap();
-
+      
       dispatch(setSession(response.data));
 
       return response.data.user;
