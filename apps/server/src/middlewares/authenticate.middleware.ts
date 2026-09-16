@@ -1,8 +1,12 @@
 import type { RequestHandler } from "express";
+
 import { AuthDataService } from "../services/auth.data-service.js";
-import { asyncHandler } from "../tools/async-handler.helper.js";
 import { ApiError } from "../tools/api-error.js";
-import { verifyAccessToken } from "../tools/auth-token.helper.js";
+import { asyncHandler } from "../tools/async-handler.helper.js";
+import {
+  verifyAccessToken,
+  type AccessTokenPayload,
+} from "../tools/auth-token.helper.js";
 
 export const authenticate: RequestHandler = asyncHandler(
   async (request, _response, next) => {
@@ -17,16 +21,11 @@ export const authenticate: RequestHandler = asyncHandler(
     }
 
     const accessToken = authorizationHeader.slice("Bearer ".length);
+    let payload: AccessTokenPayload;
 
     try {
-      const payload = verifyAccessToken(accessToken);
-
-      request.authenticatedUser = await AuthDataService.getById(payload.sub);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-
+      payload = verifyAccessToken(accessToken);
+    } catch {
       throw new ApiError({
         statusCode: 401,
         code: "INVALID_ACCESS_TOKEN",
@@ -34,6 +33,11 @@ export const authenticate: RequestHandler = asyncHandler(
       });
     }
 
-    return next();
+    request.authenticatedUser = await AuthDataService.getById(
+      payload.sub,
+      payload.sessionVersion,
+    );
+
+    next();
   },
 );

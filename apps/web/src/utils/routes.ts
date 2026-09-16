@@ -24,7 +24,10 @@ export const routes = {
     login: 'auth/login',
     refresh: 'auth/refresh',
     logout: 'auth/logout',
-    me: 'auth/me'
+    me: 'auth/me',
+    changePassword: 'auth/change-password',
+    forgotPassword: 'auth/forgot-password',
+    resetPassword: 'auth/reset-password'
   },
   jobs: {
     root: 'jobs',

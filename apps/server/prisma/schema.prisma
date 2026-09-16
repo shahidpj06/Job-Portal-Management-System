@@ -100,8 +100,10 @@ model User {
 
   refreshTokens RefreshToken[]
   applications  Application[]
-  createdJobs   Job[]          @relation("JobsCreatedBy")
+  sessionVersion      Int                  @default(0) @map("session_version")
+  passwordResetTokens PasswordResetToken[]
 
+  createdJobs   Job[]          @relation("JobsCreatedBy")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -115,11 +117,25 @@ model RefreshToken {
   expiresAt DateTime  @map("expires_at")
   revokedAt DateTime? @map("revoked_at")
   createdAt DateTime  @default(now()) @map("created_at")
+  sessionVersion Int @default(0) @map("session_version")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id             String    @id @default(cuid())
+  userId         String    @unique @map("user_id")
+  tokenHash      String    @unique @map("token_hash")
+  sessionVersion Int       @map("session_version")
+  expiresAt      DateTime  @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model Company {

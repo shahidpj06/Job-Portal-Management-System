@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthSession } from '@/services/auth';
 import { getInitials } from '@/utils/formatters';
+import { ChangePassword } from '@/components/auth/change-password';
 
-export function AdminProfilePage() {
+export const AdminProfilePage = () => {
   const { user } = useAuthSession();
 
   if (!user) {
@@ -67,7 +68,9 @@ export function AdminProfilePage() {
             </ul>
           </CardContent>
         </Card>
+
+        <ChangePassword />
       </div>
     </div>
   );
-}
+};

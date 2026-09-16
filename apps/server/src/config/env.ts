@@ -17,6 +17,8 @@ const environmentSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().min(1),
   SUPABASE_RESUMES_BUCKET: z.string().min(1),
   SUPABASE_AVATARS_BUCKET: z.string().min(1),
+  RESEND_API_KEY: z.string().trim().min(1, "RESEND_API_KEY is required."),
+  EMAIL_FROM: z.string().trim().email("EMAIL_FROM must be a valid email."),
 });
 
 export const env = environmentSchema.parse(process.env);

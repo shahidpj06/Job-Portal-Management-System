@@ -7,7 +7,25 @@ import { asyncHandler } from "../tools/async-handler.helper.js";
 import { authenticate } from "../middlewares/authenticate.middleware.js";
 import { registerSchema, loginSchema } from "../schemas/auth.schema.js";
 import { sendSuccess } from "../tools/api-response.js";
-import { validateBody } from "../middlewares/validate-request.middleware.js";
+import {
+  getValidatedBody,
+  validateBody,
+} from "../middlewares/validate-request.middleware.js";
+import {
+  passwordChangeIpLimiter,
+  passwordChangeAccountLimiter,
+  passwordResetIpLimiter,
+} from "../middlewares/password-rate-limit.middleware.js";
+import {
+  changePasswordSchema,
+  ChangePasswordInput,
+  forgotPasswordSchema,
+  ForgotPasswordInput,
+  resetPasswordSchema,
+  ResetPasswordInput,
+} from "../schemas/password.schema.js";
+import { getAuthenticatedUser } from "../tools/authenticated-user.helper.js";
+import { PasswordResetDataService } from "../services/password-reset.data-service.js";
 
 export const authRouter = Router();
 
@@ -120,6 +138,65 @@ authRouter.post(
     return sendSuccess(response, {
       message: "Logged out successfully.",
       data: null,
+    });
+  }),
+);
+
+authRouter.post(
+  "/change-password",
+  passwordChangeIpLimiter,
+  authenticate,
+  passwordChangeAccountLimiter,
+  validateBody(changePasswordSchema),
+  asyncHandler(async (request, response) => {
+    response.setHeader("Cache-Control", "no-store");
+
+    const user = getAuthenticatedUser(request);
+    const input = getValidatedBody<ChangePasswordInput>(request);
+
+    await AuthDataService.changePassword(user.id, input);
+    AuthCookieHelper.clearRefreshToken(response);
+
+    return sendSuccess(response, {
+      data: null,
+      message: "Password changed successfully. Please sign in again.",
+    });
+  }),
+);
+
+authRouter.post(
+  "/forgot-password",
+  passwordResetIpLimiter,
+  validateBody(forgotPasswordSchema),
+  asyncHandler(async (request, response) => {
+    response.setHeader("Cache-Control", "no-store");
+
+    const input = getValidatedBody<ForgotPasswordInput>(request);
+    await PasswordResetDataService.sendPasswordResetLink(input);
+
+    return sendSuccess(response, {
+      data: null,
+      message:
+        "If an account exists with that email, a password reset link has been sent.",
+    });
+  }),
+);
+
+authRouter.post(
+  "/reset-password",
+  passwordResetIpLimiter,
+  validateBody(resetPasswordSchema),
+  asyncHandler(async (request, response) => {
+    response.setHeader("Cache-Control", "no-store");
+
+    const input = getValidatedBody<ResetPasswordInput>(request);
+    await PasswordResetDataService.resetPassword(input);
+
+    AuthCookieHelper.clearRefreshToken(response);
+
+    return sendSuccess(response, {
+      data: null,
+      message: "Password reset successfully. Please sign in again.",
     });
   }),
 );
