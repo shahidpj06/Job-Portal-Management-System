@@ -15,6 +15,7 @@ import { LoginPage } from '@/views/auth/login-page';
 import { NotFoundPage } from '@/views/not-found-page';
 import { ProfilePage } from '@/views/profile/profile-page';
 import { PublicLayout } from './layouts/public-layout';
+import { GuestGuard } from './guards/guest-guard';
 import { RouteGuard } from './guards/route-guard';
 import { SignupPage } from '@/views/auth/signup-page';
 import { AdminCompaniesPage } from '@/views/admin/companies/companies-page';
@@ -39,19 +40,19 @@ export const router = createBrowserRouter([
       },
       {
         path: 'login',
-        element: <LoginPage />
+        element: <GuestGuard><LoginPage /></GuestGuard>
       },
       {
         path: 'signup',
-        element: <SignupPage />
+        element: <GuestGuard><SignupPage /></GuestGuard>
       },
       {
         path: 'forgot-password',
-        element: <ForgotPasswordPage />
+        element: <GuestGuard><ForgotPasswordPage /></GuestGuard>
       },
       {
         path: 'reset-password',
-        element: <ResetPasswordPage />
+        element: <GuestGuard><ResetPasswordPage /></GuestGuard>
       },
       {
         path: 'profile',

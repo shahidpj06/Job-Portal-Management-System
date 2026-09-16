@@ -22,8 +22,8 @@ import { AccountMenu } from './account-menu';
 
 const NAV_LINKS = [
   { label: 'Find Jobs', href: paths.jobs },
-  { label: 'Categories', href: `${paths.jobs}?view=categories` },
-  { label: 'About', href: '#about' }
+  // { label: 'Categories', href: `${paths.jobs}?view=categories` },
+  // { label: 'About', href: '#about' }
 ];
 
 export const PublicHeader = () => {
@@ -93,7 +93,6 @@ export const PublicHeader = () => {
     <header className='sticky top-0 z-50 w-full border-b border-border/80 bg-surface/90 backdrop-blur-md'>
       <div className='mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 md:px-8'>
         <div className='flex min-w-0 items-center gap-2'>
-          {/* Mobile navigation: trigger before the logo, drawer on the left. */}
           <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
             <SheetTrigger asChild>
               <Button
@@ -146,7 +145,6 @@ export const PublicHeader = () => {
           </Link>
         </div>
 
-        {/* Existing desktop navigation pill. */}
         <nav
           aria-label='Main navigation'
           className='hidden items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 md:flex'
@@ -158,7 +156,7 @@ export const PublicHeader = () => {
               aria-current={link.active ? 'page' : undefined}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                 link.active
-                  ? 'bg-surface font-semibold text-foreground shadow-2xs'
+                  ? 'bg-surface font-semibold text-primary shadow-2xs'
                   : 'text-muted-foreground hover:bg-surface/50 hover:text-foreground'
               }`}
             >
