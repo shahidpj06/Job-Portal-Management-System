@@ -1,111 +1,144 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Briefcase, ArrowLeft, MailCheck, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Field, SimpleForm } from '@/components/form';
-import { paths } from '@/utils/paths';
-import { APP_CONFIG } from '@/utils/global-config';
-import { forgotPasswordFormSchema, type ForgotPasswordFormData } from '@/schemas/password.schema';
-import { useForgotPasswordMutation } from '@/services/auth/auth.api';
+import { AlertCircle, ArrowLeft, MailCheck } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
-export function ForgotPasswordPage() {
+import { AuthPageCard } from '@/components/auth/auth-page-card';
+import { Field, SimpleForm } from '@/components/form';
+import { Button } from '@/components/ui/button';
+import {
+  forgotPasswordFormSchema,
+  type ForgotPasswordFormData
+} from '@/schemas/password.schema';
+import { useForgotPasswordMutation } from '@/services/auth/auth.api';
+import { paths } from '@/utils/paths';
+
+const ERROR_MESSAGE = {
+  FAILED_TO_SEND: 'Failed to send reset link. Please try again.',
+  UNEXPECTED: 'An unexpected error occurred. Please try again.'
+};
+
+type ForgotPasswordApiError = {
+  data?: {
+    error?: {
+      message?: string;
+    };
+    message?: string;
+  };
+};
+
+const getForgotPasswordErrorMessage = (error: unknown) => {
+  if (!error || typeof error !== 'object' || !('data' in error)) {
+    return ERROR_MESSAGE.UNEXPECTED;
+  }
+
+  const apiError = error as ForgotPasswordApiError;
+
+  return (
+    apiError.data?.error?.message ??
+    apiError.data?.message ??
+    ERROR_MESSAGE.FAILED_TO_SEND
+  );
+};
+
+export const ForgotPasswordPage = () => {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
   const [isSuccess, setIsSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const methods = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordFormSchema),
     defaultValues: {
       email: ''
-    }
+    },
+    resolver: zodResolver(forgotPasswordFormSchema)
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setErrorMessage(null);
+
     try {
       await forgotPassword(data).unwrap();
+
       setIsSuccess(true);
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'data' in err) {
-        const apiErr = err as { data?: { error?: { message?: string }; message?: string } };
-        setErrorMessage(
-          apiErr.data?.error?.message ||
-            apiErr.data?.message ||
-            'Failed to send reset link. Please try again.'
-        );
-      } else {
-        setErrorMessage('An unexpected error occurred. Please try again.');
-      }
+    } catch (error: unknown) {
+      setErrorMessage(getForgotPasswordErrorMessage(error));
     }
   };
 
   return (
-    <div className='flex min-h-[calc(90vh-4rem)] flex-col items-center justify-center px-4 py-12 bg-muted/30'>
-      <Card className='w-full max-w-md shadow-lg border-border/50'>
-        <CardHeader className='text-center'>
+    <AuthPageCard
+      description='Enter your email address and we will send you instructions to reset your password.'
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
           <Link
-            to={paths.home}
-            className='mx-auto mb-4 flex w-fit items-center gap-2 text-lg font-bold text-primary transition-opacity hover:opacity-90'
+            className='font-medium text-primary hover:underline'
+            to={paths.auth['sign-up']}
           >
-            <Briefcase className='h-6 w-6 text-primary' />
-            {APP_CONFIG.name}
+            Sign up free
           </Link>
-          <CardTitle className='text-2xl font-bold tracking-tight'>Reset your password</CardTitle>
-          <CardDescription>
-            Enter your email address and we&apos;ll send you a link to reset your password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isSuccess ? (
-            <div className='rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-5 text-center space-y-3'>
-              <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600'>
-                <MailCheck className='h-6 w-6' />
-              </div>
-              <h3 className='font-semibold text-emerald-900 dark:text-emerald-300'>
-                Reset link sent
-              </h3>
-              <p className='text-sm text-emerald-700 dark:text-emerald-400'>
-                If an account exists for that email, we&apos;ve sent instructions to reset your
-                password.
-              </p>
+        </>
+      }
+      title='Forgot your password?'
+    >
+      {isSuccess ? (
+        <div className='space-y-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-5 text-center'>
+          <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600'>
+            <MailCheck className='h-6 w-6' />
+          </div>
+
+          <h3 className='font-semibold text-emerald-900 dark:text-emerald-300'>
+            Reset link sent
+          </h3>
+
+          <p className='text-sm text-emerald-700 dark:text-emerald-400'>
+            If an account exists for that email, we&apos;ve sent instructions to
+            reset your password.
+          </p>
+        </div>
+      ) : (
+        <SimpleForm
+          className='space-y-4'
+          methods={methods}
+          noValidate
+          onSubmit={onSubmit}
+        >
+          {errorMessage && (
+            <div className='flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive'>
+              <AlertCircle className='h-4 w-4 shrink-0' />
+              <span>{errorMessage}</span>
             </div>
-          ) : (
-            <SimpleForm methods={methods} onSubmit={onSubmit} className='space-y-4' noValidate>
-              {errorMessage && (
-                <div className='flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive'>
-                  <AlertCircle className='h-4 w-4 shrink-0' />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              <Field.Text<ForgotPasswordFormData>
-                id='fp-email'
-                name='email'
-                label='Email address'
-                type='email'
-                placeholder='you@example.com'
-                autoComplete='email'
-              />
-
-              <Button type='submit' className='w-full font-medium' disabled={isLoading}>
-                {isLoading ? 'Sending reset link…' : 'Send Reset Link'}
-              </Button>
-            </SimpleForm>
           )}
 
-          <div className='mt-6 text-center'>
-            <Link
-              to={paths.auth.login}
-              className='inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors'
-            >
-              <ArrowLeft className='h-4 w-4' /> Back to sign in
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Field.Text<ForgotPasswordFormData>
+            autoComplete='email'
+            id='forgot-password-email'
+            label='Email address'
+            name='email'
+            placeholder='you@example.com'
+            type='email'
+          />
+
+          <Button
+            className='w-full'
+            disabled={isLoading}
+            type='submit'
+          >
+            {isLoading ? 'Sending reset link…' : 'Send Reset Link'}
+          </Button>
+        </SimpleForm>
+      )}
+
+      <div className='mt-6 text-center'>
+        <Link
+          className='inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground'
+          to={paths.auth.login}
+        >
+          <ArrowLeft className='h-4 w-4' />
+          Back to sign in
+        </Link>
+      </div>
+    </AuthPageCard>
   );
-}
+};

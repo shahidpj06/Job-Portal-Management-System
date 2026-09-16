@@ -14,19 +14,19 @@ export interface IAuthPageCardProps extends PropsWithChildren {
 
 export const AuthPageCard = ({ children, description, footer, title }: IAuthPageCardProps) => {
   return (
-    <main className='flex min-h-[calc(100vh-1rem)] items-center justify-center bg-muted/30 px-4 py-12'>
-      <Card className='w-full max-w-md'>
+    <main className='flex min-h-[calc(90vh-4rem)] flex-col items-center justify-center px-4 py-12 bg-muted/30'>
+      <Card className='w-full max-w-md shadow-lg border-border/50'>
         <CardHeader className='text-center'>
           <Link
             aria-label={`${APP_CONFIG.name} home`}
             className='mx-auto mb-4 flex w-fit items-center gap-2 text-lg font-bold text-primary'
             to={paths.home}
           >
-            <Briefcase className='h-6 w-6' />
+            <Briefcase className='h-6 w-6 text-primary' />
             {APP_CONFIG.name}
           </Link>
 
-          <CardTitle className='text-2xl'>{title}</CardTitle>
+          <CardTitle className='text-2xl font-bold tracking-tight'>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
 

@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,46 +10,46 @@ import { getApiErrorMessage } from '@/services/api';
 import { useAuthSession } from '@/services/auth';
 import { paths } from '@/utils/paths';
 
-import { SIGNUP_DEFAULT_VALUES, signupSchema, type SignupFormData } from '../../schemas/auth-form.schemas';
+import {
+  SIGNUP_DEFAULT_VALUES,
+  signupSchema,
+  type SignupFormData
+} from '../../schemas/auth-form.schemas';
 
 export const SignupPage = () => {
   const { isLoading, register: registerAccount } = useAuthSession();
   const navigate = useNavigate();
 
-  const methods = useForm<SignupFormData>({
+  const signupFormMethods = useForm<SignupFormData>({
     defaultValues: SIGNUP_DEFAULT_VALUES,
     resolver: zodResolver(signupSchema)
   });
 
   const {
     formState: { isSubmitting }
-  } = methods;
+  } = signupFormMethods;
 
-  const onSubmit = useCallback<SubmitHandler<SignupFormData>>(
-    async (formData) => {
-      try {
-        await registerAccount({
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          password: formData.password
-        });
+  const handleSubmit: SubmitHandler<SignupFormData> = async (formData) => {
+    try {
+      await registerAccount({
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        password: formData.password
+      });
 
-        toast.success('Your account has been created.');
+      toast.success('Your account has been created.');
 
-        navigate(paths.jobs, { replace: true });
-      } catch (error) {
-        toast.error(getApiErrorMessage(error, 'Unable to create your account.'));
-      }
-    },
-    [navigate, registerAccount]
-  );
+      navigate(paths.jobs, { replace: true });
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to create your account.'));
+    }
+  };
 
-  const isSubmittingForm = isSubmitting || isLoading;
+  const isFormSubmitting = isSubmitting || isLoading;
 
   return (
     <AuthPageCard
-      title='Create your account'
       description='Start your job search journey today — free forever'
       footer={
         <>
@@ -60,53 +59,54 @@ export const SignupPage = () => {
           </Link>
         </>
       }
+      title='Create your account'
     >
-      <SimpleForm methods={methods} onSubmit={onSubmit} className='space-y-4'>
+      <SimpleForm className='space-y-4' methods={signupFormMethods} onSubmit={handleSubmit}>
         <div className='grid gap-3 sm:grid-cols-2'>
           <Field.Text<SignupFormData>
-            name='firstName'
+            autoComplete='given-name'
             id='signup-first-name'
             label='First name'
+            name='firstName'
             placeholder='Jane'
-            autoComplete='given-name'
           />
 
           <Field.Text<SignupFormData>
-            name='lastName'
+            autoComplete='family-name'
             id='signup-last-name'
             label='Last name'
+            name='lastName'
             placeholder='Doe'
-            autoComplete='family-name'
           />
         </div>
 
         <Field.Text<SignupFormData>
-          name='email'
-          id='signup-email'
-          type='email'
-          label='Email'
-          placeholder='you@example.com'
           autoComplete='email'
+          id='signup-email'
+          label='Email'
+          name='email'
+          placeholder='you@example.com'
+          type='email'
         />
 
         <Field.Password<SignupFormData>
-          name='password'
+          autoComplete='new-password'
           id='signup-password'
           label='Password'
+          name='password'
           placeholder='Min. 8 characters'
-          autoComplete='new-password'
         />
 
         <Field.Password<SignupFormData>
-          name='confirmPassword'
+          autoComplete='new-password'
           id='signup-confirm-password'
           label='Confirm password'
+          name='confirmPassword'
           placeholder='Repeat password'
-          autoComplete='new-password'
         />
 
-        <Button className='w-full' disabled={isSubmittingForm} type='submit'>
-          {isSubmittingForm ? 'Creating account…' : 'Create Account'}
+        <Button className='w-full' disabled={isFormSubmitting} type='submit'>
+          {isFormSubmitting ? 'Creating account…' : 'Create Account'}
         </Button>
       </SimpleForm>
     </AuthPageCard>
