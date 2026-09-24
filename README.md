@@ -82,8 +82,6 @@ The project is built as a TypeScript monorepo using **React 19, Node.js, Express
 * Tailwind CSS
 * shadcn/ui
 * Lucide React
-* Sonner
-* Axios
 
 ### Backend
 
@@ -136,23 +134,6 @@ JobNest follows a monorepo architecture with the frontend and backend maintained
                                   │ Resend         │
                                   └────────────────┘
 ```
-
----
-
-## 🌟 Evaluation Criteria
-
-| Evaluation Criterion          | Implementation                                                                                                                 |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Full-Stack Implementation** | Monorepo architecture containing `@jobnest/web` with React 19 + Vite and `@jobnest/server` with Node.js + Express 5            |
-| **State Management**          | Centralized Redux Toolkit store for authentication, jobs, filters, applications, and administrative workflows                  |
-| **Authentication & Security** | JWT access/refresh tokens, token rotation, HTTP-only cookies, bcrypt password hashing, authorization guards, and rate limiting |
-| **Database & Migrations**     | PostgreSQL with Prisma ORM, relational models, versioned migrations, and deterministic database seeding                        |
-| **Admin Portal**              | Analytics dashboard, job CRUD operations, applicant management, filtering, and pagination                                      |
-| **Candidate Portal**          | Job discovery, multi-criteria filtering, job details, profile management, resume upload, and application submission            |
-| **Validation**                | Shared validation principles using Zod and React Hook Form                                                                     |
-| **Code Quality**              | TypeScript across the stack, modular architecture, ESLint, Prettier, reusable components, and separation of concerns           |
-| **User Experience**           | Responsive Tailwind CSS UI, shadcn/ui components, accessible primitives, loading/error states, and toast notifications         |
-
 ---
 
 ## 📁 Repository Structure
