@@ -221,13 +221,13 @@ Copy the provided environment templates.
 ### Backend
 
 ```bash
-cp apps/server/.env.example apps/server/.env
+cp apps/server/.env
 ```
 
 ### Frontend
 
 ```bash
-cp apps/web/.env.example apps/web/.env
+cp apps/web/.env
 ```
 
 Update the generated `.env` files with the required credentials and configuration.
@@ -293,44 +293,6 @@ The applications will be available at:
 | ----------- | ------------------------------ |
 | Frontend    | `http://localhost:5173`        |
 | Backend API | `http://localhost:4000/api/v1` |
-
----
-
-## 🔄 Application Flow
-
-### Candidate
-
-```text
-Register / Login
-      ↓
-Browse Jobs
-      ↓
-Search & Filter
-      ↓
-View Job Details
-      ↓
-Apply for Job
-      ↓
-Upload Resume
-      ↓
-Track Application
-```
-
-### Administrator
-
-```text
-Admin Login
-      ↓
-Dashboard
-      ↓
-Manage Jobs
-      ↓
-Review Applications
-      ↓
-Review Candidates
-      ↓
-Update Application Status
-```
 
 ---
 
@@ -441,11 +403,3 @@ pnpm --filter @jobnest/server exec prisma studio
 ```
 
 Additional application-specific scripts are available inside the respective `package.json` files.
-
----
-
-## 📄 License
-
-This project is developed as a full-stack Job Portal Management System for technical assessment and demonstration purposes.
-
----
